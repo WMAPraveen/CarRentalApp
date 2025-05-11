@@ -17,6 +17,8 @@ class WelcomeScreen extends StatelessWidget {
               child: Image.asset(
                 'assets/welcome.png',
                 fit: BoxFit.cover, // Ensures the image covers the area
+                width: double.infinity,
+                height: double.infinity,
                 errorBuilder: (context, error, stackTrace) {
                   return const Center(
                     child: Text(
@@ -69,7 +71,7 @@ class WelcomeScreen extends StatelessWidget {
                           );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey[800],
+                          backgroundColor: const Color.fromARGB(255, 255, 255, 255),
                           padding: const EdgeInsets.symmetric(
                             vertical: 12,
                             horizontal: 40,
@@ -81,7 +83,7 @@ class WelcomeScreen extends StatelessWidget {
                         child: const Text(
                           'Let\'s Get Started',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: Color.fromARGB(255, 0, 0, 0),
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),

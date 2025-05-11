@@ -63,7 +63,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     'Hi! Welcome back, you\'ve been missed',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Color.fromARGB(255, 82, 67, 72),
+                      color: Colors.white70,
                       fontSize: 16,
                     ),
                   ),
