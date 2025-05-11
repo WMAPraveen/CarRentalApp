@@ -1,4 +1,4 @@
-import 'package:car_rental_app/features/auth/screen/welcomescreen.dart';
+import 'package:car_rental_app/features/auth/screen/Loadingscreen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 // import 'features/auth/screen/signin.dart';
@@ -36,7 +36,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const WelcomeScreen(),
+      home: const LoadingScreen(),
     );
   }
 }
