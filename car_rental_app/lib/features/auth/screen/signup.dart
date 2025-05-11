@@ -190,7 +190,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 });
                               },
                         checkColor: Colors.white,
-                        activeColor: Colors.pink,
+                        activeColor: Color(0xFFE74D3D),
                       ),
                       const Text(
                         'Agree with ',
@@ -203,7 +203,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         child: const Text(
                           'Terms & Conditions',
                           style: TextStyle(
-                            color: Colors.pink,
+                            color: Color(0xFFE74D3D),
                             decoration: TextDecoration.underline,
                           ),
                         ),
@@ -284,7 +284,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             }
                           },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.pink,
+                      backgroundColor: Color(0xFFE74D3D),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
@@ -357,7 +357,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         child: const Text(
                           'Sign In',
                           style: TextStyle(
-                            color: Colors.pink,
+                            color: Color(0xFFE74D3D),
                             fontWeight: FontWeight.bold,
                           ),
                         ),
