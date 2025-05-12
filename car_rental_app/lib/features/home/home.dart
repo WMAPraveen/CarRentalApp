@@ -150,16 +150,16 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            // Padding(
-            //   padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            //   child: Row(
-            //     children: [
-            //       Expanded(child: _buildLocationCard('Danusha rent cars', '5.0', 'Car Rental Agency', 'Homagama', 'Open 24 hours', '077 123 4567')),
-            //       const SizedBox(width: 16),
-            //       Expanded(child: _buildLocationCard('VS rent cars', '5.0', 'Car Rental Agency', '', 'Open 24 hours', '077 123 4567')),
-            //     ],
-            //   ),
-            // ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                children: [
+                  
+                  const SizedBox(width: 16),
+                  
+                ],
+              ),
+            ),
             // const SizedBox(height: 16),
             // Most Rented Vehicles
             Padding(
@@ -178,35 +178,22 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 children: [
                   _buildVehicleCard(
-                    'Toyota Corolla',
-                    'Automatic',
-                    'Homagama',
-                    'Rs 5,000 / DAY',
+                    'Wijesinghe Rent Cars',
+                    'Matara',
+                    
                   ),
                   const SizedBox(height: 8),
                   _buildVehicleCard(
-                    'Honda Civic',
-                    'Automatic/Manual',
-                    'Homagama',
-                    'Rs 6,000 / DAY',
+                    'Weerakkodi Car Rentals',
+                    'Rathnapura',
                   ),
                   const SizedBox(height: 8),
                   _buildVehicleCard(
-                    'Honda Civic',
-                    'Automatic/Manual',
-                    'Homagama',
-                    'Rs 6,000 / DAY',
+                    'Wijesundara Rent Service',
+                    'Anuradhapura',
                   ),
                 ],
               ),
-              // padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              // child: _buildVehicleCard(
-              //   'Honda Civic',
-              //   'Automatic/Manual',
-              //   'Homagama',
-              //   'Rs 6,000 / DAY',
-              //   isBooked: true,
-              // ),
             ),
           ],
         ),
@@ -214,129 +201,118 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryTab(String title, {bool isSelected = false}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: isSelected ? Colors.black : Colors.grey[200],
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        title,
-        style: TextStyle(
-          color: isSelected ? Colors.white : Colors.black,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-        ),
-      ),
-    );
-  }
+  // Widget _buildCategoryTab(String title, {bool isSelected = false}) {
+  //   return Container(
+  //     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+  //     decoration: BoxDecoration(
+  //       color: isSelected ? Colors.black : Colors.grey[200],
+  //       borderRadius: BorderRadius.circular(20),
+  //     ),
+  //     child: Text(
+  //       title,
+  //       style: TextStyle(
+  //         color: isSelected ? Colors.white : Colors.black,
+  //         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+  //       ),
+  //     ),
+  //   );
+  // }
 
-  Widget _buildLocationCard(String title, String rating, String category, String location, String hours, String phone) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+  // Widget _buildLocationCard(String title, String rating, String category, String location, String hours, String phone) {
+  //   return Card(
+  //     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  //     child: Padding(
+  //       padding: const EdgeInsets.all(12.0),
+  //       child: Column(
+  //         crossAxisAlignment: CrossAxisAlignment.start,
+  //         children: [
+  //           Text(
+  //             title,
+  //             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+  //           ),
+  //           const SizedBox(height: 4),
+  //           Row(
+  //             children: [
+  //               Text(
+  //                 rating,
+  //                 style: const TextStyle(fontSize: 14),
+  //               ),
+  //               const SizedBox(width: 4),
+  //               const Icon(Icons.star, color: Colors.yellow, size: 16),
+  //               const Icon(Icons.star, color: Colors.yellow, size: 16),
+  //               const Icon(Icons.star, color: Colors.yellow, size: 16),
+  //               const Icon(Icons.star, color: Colors.yellow, size: 16),
+  //               const Icon(Icons.star, color: Colors.yellow, size: 16),
+  //             ],
+  //           ),
+  //           const SizedBox(height: 4),
+  //           Text(category, style: const TextStyle(color: Colors.grey)),
+  //           if (location.isNotEmpty) ...[
+  //             const SizedBox(height: 4),
+  //             Text(location, style: const TextStyle(color: Colors.grey)),
+  //           ],
+  //           const SizedBox(height: 4),
+  //           Text(hours, style: const TextStyle(color: Colors.grey)),
+  //           const SizedBox(height: 8),
+  //           Row(
+  //             children: [
+  //               Text(phone, style: const TextStyle(color: Colors.grey)),
+  //               const Spacer(),
+  //               IconButton(
+  //                 icon: const Icon(Icons.directions, color: Colors.blue),
+  //                 onPressed: () {},
+  //               ),
+  //             ],
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+
+ Widget _buildVehicleCard(String title, String location) {
+  return Card(
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Image placeholder at the top
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(10),
+              topRight: Radius.circular(10),
             ),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Text(
-                  rating,
-                  style: const TextStyle(fontSize: 14),
-                ),
-                const SizedBox(width: 4),
-                const Icon(Icons.star, color: Colors.yellow, size: 16),
-                const Icon(Icons.star, color: Colors.yellow, size: 16),
-                const Icon(Icons.star, color: Colors.yellow, size: 16),
-                const Icon(Icons.star, color: Colors.yellow, size: 16),
-                const Icon(Icons.star, color: Colors.yellow, size: 16),
-              ],
+          child: Container(
+            height: 120,
+            color: Colors.grey[300],
+            child: const Center(
+              child: Text('Image Placeholder'),
             ),
-            const SizedBox(height: 4),
-            Text(category, style: const TextStyle(color: Colors.grey)),
-            if (location.isNotEmpty) ...[
+          ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 4),
-              Text(location, style: const TextStyle(color: Colors.grey)),
-            ],
-            const SizedBox(height: 4),
-            Text(hours, style: const TextStyle(color: Colors.grey)),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Text(phone, style: const TextStyle(color: Colors.grey)),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.directions, color: Colors.blue),
-                  onPressed: () {},
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildVehicleCard(String title, String transmission, String location, String price, {bool isBooked = false}) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Row(
-          children: [
-            Container(
-              width: 80,
-              height: 60,
-              color: Colors.grey[300], // Placeholder for vehicle image
-              child: const Center(child: Text('Image Placeholder')),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      const Spacer(),
-                      if (isBooked)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Text(
-                            'Booked',
-                            style: TextStyle(color: Colors.white, fontSize: 12),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(transmission, style: const TextStyle(color: Colors.grey)),
-                  const SizedBox(height: 4),
-                  Text(location, style: const TextStyle(color: Colors.grey)),
-                  const SizedBox(height: 4),
-                  Text(
-                    price,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ],
+              Text(
+                location,
+                style: const TextStyle(color: Colors.grey),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
-  }
+      ],
+    ),
+  );
+}
+
 }
