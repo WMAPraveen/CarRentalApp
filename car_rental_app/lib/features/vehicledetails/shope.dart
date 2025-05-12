@@ -1,3 +1,4 @@
+import 'package:car_rental_app/features/vehicledetails/vehicledetails.dart';
 import 'package:flutter/material.dart';
 
 class Shope extends StatefulWidget {
@@ -37,18 +38,42 @@ class _ShopeState extends State<Shope> with SingleTickerProviderStateMixin {
       child: Column(
         children: [
           const SizedBox(height: 16),
-          Card(
-            child: ListTile(
-              title: Text('$tabName Vehicle 1'),
-              subtitle: const Text('Brand A'),
-              leading: const Icon(Icons.directions_car),
+
+          // First card
+          InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => VehicleDetails(vehicleName: '$tabName Vehicle 1'),
+                ),
+              );
+            },
+            child: Card(
+              child: ListTile(
+                title: Text('$tabName Vehicle 1'),
+                subtitle: const Text('Brand A'),
+                leading: const Icon(Icons.directions_car),
+              ),
             ),
           ),
-          Card(
-            child: ListTile(
-              title: Text('$tabName Vehicle 2'),
-              subtitle: const Text('Brand B'),
-              leading: const Icon(Icons.directions_car),
+
+          // Second card
+          InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => VehicleDetails(vehicleName: '$tabName Vehicle 2'),
+                ),
+              );
+            },
+            child: Card(
+              child: ListTile(
+                title: Text('$tabName Vehicle 2'),
+                subtitle: const Text('Brand B'),
+                leading: const Icon(Icons.directions_car),
+              ),
             ),
           ),
         ],
@@ -136,9 +161,9 @@ class _ShopeState extends State<Shope> with SingleTickerProviderStateMixin {
                     child: TabBar(
                       controller: _tabController,
                       isScrollable: true,
-                      labelColor: Color(0xFFE74D3D),
+                      labelColor: const Color(0xFFE74D3D),
                       unselectedLabelColor: Colors.black,
-                      indicatorColor: Color(0xFFE74D3D),
+                      indicatorColor: const Color(0xFFE74D3D),
                       indicatorWeight: 3,
                       labelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                       labelPadding: const EdgeInsets.symmetric(horizontal: 24.0),
