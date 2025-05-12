@@ -1,4 +1,6 @@
+// vehicle_details.dart
 import 'package:flutter/material.dart';
+import 'book_now_page.dart';
 
 class VehicleDetails extends StatelessWidget {
   final String vehicleName;
@@ -8,7 +10,6 @@ class VehicleDetails extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // backgroundColor: Colors.black, // Dark background
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -117,7 +118,13 @@ class VehicleDetails extends StatelessWidget {
                   Center(
                     child: ElevatedButton(
                       onPressed: () {
-                        // Booking logic here
+                        // Navigate to BookNowPage when Book Now is pressed
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const BookNowPage(),
+                          ),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color.fromARGB(255, 0, 0, 0),
