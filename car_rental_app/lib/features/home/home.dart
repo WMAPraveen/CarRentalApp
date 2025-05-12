@@ -23,9 +23,9 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _cardWidth = MediaQuery.of(context).size.width - 32; // Full width minus padding (16*2)
+      _cardWidth = MediaQuery.of(context).size.width - 32;
 
-      _scrollTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      _scrollTimer = Timer.periodic(const Duration(seconds: 6), (_) {
         final maxScroll = _scrollController.position.maxScrollExtent;
 
         if (_scrollPosition + _cardWidth + _cardSpacing > maxScroll) {
@@ -61,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    _cardWidth = MediaQuery.of(context).size.width - 32; // Also re-assign in build for hot reload safety
+    _cardWidth = MediaQuery.of(context).size.width - 32;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -83,7 +83,6 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
             Container(
               color: Colors.black,
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -172,20 +171,19 @@ class _HomeScreenState extends State<HomeScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: SizedBox(
-                height: 200,
+                height: 280,
                 child: ListView(
                   controller: _scrollController,
                   scrollDirection: Axis.horizontal,
                   children: [
-                    _buildFixedSizeCard('SUV'),
+                    _buildFixedSizeCard( 'assets/images/I1.png'),
                     SizedBox(width: _cardSpacing),
-                    _buildFixedSizeCard('Sedan'),
+                    _buildFixedSizeCard( 'assets/images/I2.png'),
                     SizedBox(width: _cardSpacing),
-                    _buildFixedSizeCard('Hatchback'),
+                    _buildFixedSizeCard( 'assets/images/I3.png'),
                     SizedBox(width: _cardSpacing),
-                    _buildFixedSizeCard('Convertible'),
-                    SizedBox(width: _cardSpacing),
-                    _buildFixedSizeCard('Electric'),
+                    _buildFixedSizeCard( 'assets/images/I4.png'),
+                  
                   ],
                 ),
               ),
@@ -221,14 +219,41 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildFixedSizeCard(String label) {
+  Widget _buildFixedSizeCard( String imagePath) {
     return SizedBox(
       width: _cardWidth,
       height: 190,
       child: Card(
         elevation: 4,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Center(child: Text(label, style: const TextStyle(fontSize: 16))),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          children: [
+            Image.asset(
+              imagePath,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+              errorBuilder: (context, error, stackTrace) {
+                  return const Center(
+                    child: Text(
+                      'Image failed to load',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  );
+                },
+              
+            ),
+            // Container(
+            //   color: Colors.black.withOpacity(0.4),
+            //   alignment: Alignment.center,
+            //   child: Text(
+            //     label,
+            //     style: const TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold),
+            //   ),
+            // ),
+          ],
+        ),
       ),
     );
   }
