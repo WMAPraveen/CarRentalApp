@@ -1,9 +1,10 @@
+import 'package:car_rental_app/features/lister/listerdashboardscreen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../widgets/authform.dart';
 import './signup.dart';
-import './forgetpassword.dart'; // Import the new ForgetPasswordScreen
+import './forgetpassword.dart';
 import '../../home/home.dart';
 import '../../admin/admin.dart';
 
@@ -28,6 +29,32 @@ class _SignInScreenState extends State<SignInScreen> {
     super.dispose();
   }
 
+  void _handleAuthNavigation(UserCredential userCredential) async {
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userCredential.user!.uid)
+        .get();
+
+    final data = userDoc.data();
+    final isAdmin = data?['isAdmin'] ?? false;
+    final role = data?['role'] ?? 'renter';
+
+    Widget destinationScreen;
+
+    if (isAdmin) {
+      destinationScreen = const AdminDashboardScreen();
+    } else if (role == 'lister') {
+      destinationScreen = const ListerDashboardScreen();
+    } else {
+      destinationScreen = const HomeScreen();
+    }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => destinationScreen),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -35,239 +62,121 @@ class _SignInScreenState extends State<SignInScreen> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
-        // leading: IconButton(
-        //   icon: const Icon(Icons.arrow_back, color: Colors.white),
-        //   onPressed: () => Navigator.pop(context),
-        // ),
       ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text(
-                    'Sign In',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Hi! Welcome back, you\'ve been missed',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  AuthForm(
-                    isSignIn: true,
-                    isLoading: _isLoading,
-                    obscurePassword: true,
-                    onTogglePasswordVisibility: () {},
-                    onSubmit: (email, password) async {
-                      setState(() {
-                        _isLoading = true;
-                      });
-                      try {
-                        final userCredential = await FirebaseAuth.instance
-                            .signInWithEmailAndPassword(
-                          email: email,
-                          password: password,
-                        );
-                        final userDoc = await FirebaseFirestore.instance
-                            .collection('users')
-                            .doc(userCredential.user!.uid)
-                            .get();
-                        final isAdmin = userDoc.data()?['isAdmin'] ?? false;
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => isAdmin
-                                ? const AdminDashboardScreen()
-                                : const HomeScreen(),
-                          ),
-                        );
-                      } on FirebaseAuthException catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              e.message ?? 'Sign-in failed',
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                            backgroundColor: Colors.grey[800],
-                          ),
-                        );
-                      } finally {
-                        setState(() {
-                          _isLoading = false;
-                        });
-                      }
-                    },
-                    emailController: _emailController,
-                    passwordController: _passwordController,
-                    formKey: _formKey,
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Checkbox(
-                            value: _rememberMe,
-                            onChanged: _isLoading
-                                ? null
-                                : (value) {
-                                    setState(() {
-                                      _rememberMe = value ?? false;
-                                    });
-                                  },
-                            activeColor: const Color(0xFFE74D3D),
-                            checkColor: Colors.white,
-                          ),
-                          const Text(
-                            'Remember me',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ],
-                      ),
-                      TextButton(
-                        onPressed: _isLoading
-                            ? null
-                            : () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const ForgetPasswordScreen(),
-                                  ),
-                                );
-                              },
-                        child: const Text(
-                          'Forgot password...',
-                          style: TextStyle(color: Color(0xFFE74D3D)),
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Sign In',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Hi! Welcome back, you\'ve been missed',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white70),
+                ),
+                const SizedBox(height: 32),
+                AuthForm(
+                  isSignIn: true,
+                  isLoading: _isLoading,
+                  obscurePassword: true,
+                  onTogglePasswordVisibility: () {},
+                  onSubmit: (_, __) {}, // handled manually below
+                  emailController: _emailController,
+                  passwordController: _passwordController,
+                  formKey: _formKey,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: _rememberMe,
+                          onChanged: _isLoading ? null : (value) => setState(() => _rememberMe = value ?? false),
+                          activeColor: const Color(0xFFE74D3D),
+                          checkColor: Colors.white,
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: _isLoading
-                        ? null
-                        : () {
-                            if (_formKey.currentState!.validate()) {
-                              _formKey.currentState!.save();
-                              _onSubmit(
-                                _emailController.text.trim(),
-                                _passwordController.text,
+                        const Text('Remember me', style: TextStyle(color: Colors.white)),
+                      ],
+                    ),
+                    TextButton(
+                      onPressed: _isLoading
+                          ? null
+                          : () => Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const ForgetPasswordScreen()),
+                              ),
+                      child: const Text('Forgot password...', style: TextStyle(color: Color(0xFFE74D3D))),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: _isLoading
+                      ? null
+                      : () async {
+                          if (_formKey.currentState!.validate()) {
+                            _formKey.currentState!.save();
+
+                            final email = _emailController.text.trim();
+                            final password = _passwordController.text;
+
+                            setState(() => _isLoading = true);
+                            try {
+                              final userCredential = await FirebaseAuth.instance
+                                  .signInWithEmailAndPassword(email: email, password: password);
+                              _handleAuthNavigation(userCredential);
+                            } on FirebaseAuthException catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(e.message ?? 'Sign-in failed')),
                               );
+                            } finally {
+                              setState(() => _isLoading = false);
                             }
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE74D3D),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE74D3D),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('Sign In', style: TextStyle(color: Colors.white)),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text("Don't have an account?", style: TextStyle(color: Colors.white)),
+                    TextButton(
+                      onPressed: _isLoading
+                          ? null
+                          : () => Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const SignUpScreen()),
+                              ),
+                      child: const Text('Sign up', style: TextStyle(color: Color(0xFFE74D3D))),
                     ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Sign In',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        "Don't have an account?",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      TextButton(
-                        onPressed: _isLoading
-                            ? null
-                            : () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const SignUpScreen(),
-                                  ),
-                                );
-                              },
-                        style: TextButton.styleFrom(
-                          foregroundColor: const Color(0xFFE74D3D),
-                        ),
-                        child: const Text('Sign up'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ),
           ),
         ),
       ),
     );
-  }
-
-  void _onSubmit(String email, String password) async {
-    setState(() {
-      _isLoading = true;
-    });
-    try {
-      final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userCredential.user!.uid)
-          .get();
-      final isAdmin = userDoc.data()?['isAdmin'] ?? false;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => isAdmin
-              ? const AdminDashboardScreen()
-              : const HomeScreen(),
-        ),
-      );
-    } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            e.message ?? 'Sign-in failed',
-            style: const TextStyle(color: Colors.white),
-          ),
-          backgroundColor: Colors.grey[800],
-        ),
-      );
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
   }
 }

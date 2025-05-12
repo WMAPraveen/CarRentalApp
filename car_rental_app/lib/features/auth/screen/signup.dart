@@ -2,7 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../widgets/authform.dart';
-import '../../home/home.dart';
+import '../../home/home.dart'; // For renter
+import 'package:car_rental_app/features/lister/listerdashboardscreen.dart'; // For lister
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -29,6 +30,53 @@ class _SignUpScreenState extends State<SignUpScreen> {
     super.dispose();
   }
 
+  Future<void> _handleSubmit(String email, String password) async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      final userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: email, password: password);
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .set({
+        'email': email,
+        'name': _nameController.text.trim(),
+        'role': _selectedRole.toLowerCase(),
+        'createdAt': FieldValue.serverTimestamp(),
+        'isAdmin': false,
+      });
+
+      if (_selectedRole.toLowerCase() == 'lister') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const ListerDashboardScreen()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.message ?? 'Sign-up failed',
+            style: const TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.grey[800],
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -47,7 +95,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
             child: Padding(
               padding: const EdgeInsets.all(24.0),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Text(
@@ -63,12 +110,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   const Text(
                     'Fill your information below or register with your social account',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: Colors.white70, fontSize: 16),
                   ),
                   const SizedBox(height: 32),
+
                   // Name Field
                   TextFormField(
                     controller: _nameController,
@@ -91,8 +136,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       return null;
                     },
                   ),
+
                   const SizedBox(height: 16),
-                  // Email and Password via AuthForm
+
+                  // Auth Form (Email/Password/Confirm)
                   AuthForm(
                     formKey: _formKey,
                     emailController: _emailController,
@@ -105,51 +152,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         _obscurePassword = !_obscurePassword;
                       });
                     },
-                    onSubmit: (email, password) async {
-                      setState(() {
-                        _isLoading = true;
-                      });
-                      try {
-                        final userCredential = await FirebaseAuth.instance
-                            .createUserWithEmailAndPassword(
-                              email: email,
-                              password: password,
-                            );
-                        await FirebaseFirestore.instance
-                            .collection('users')
-                            .doc(userCredential.user!.uid)
-                            .set({
-                              'email': email,
-                              'name': _nameController.text.trim(),
-                              'role': _selectedRole.toLowerCase(),
-                              'createdAt': FieldValue.serverTimestamp(),
-                              'isAdmin': false,
-                            });
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const HomeScreen(),
-                          ),
-                        );
-                      } on FirebaseAuthException catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              e.message ?? 'Sign-up failed',
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                            backgroundColor: Colors.grey[800],
-                          ),
-                        );
-                      } finally {
-                        setState(() {
-                          _isLoading = false;
-                        });
-                      }
-                    },
+                    onSubmit: (_, __) {}, // will trigger manually
                   ),
+
                   const SizedBox(height: 16),
-                  // Role Selection
+
+                  // Role Dropdown
                   DropdownButtonFormField<String>(
                     value: _selectedRole,
                     decoration: InputDecoration(
@@ -162,7 +170,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     dropdownColor: Colors.grey[800],
                     style: const TextStyle(color: Colors.white),
-                    items: ['Renter', 'Lister'].map((String role) {
+                    items: ['Renter', 'Lister'].map((role) {
                       return DropdownMenuItem<String>(
                         value: role,
                         child: Text(role),
@@ -170,36 +178,29 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     }).toList(),
                     onChanged: _isLoading
                         ? null
-                        : (value) {
-                            setState(() {
+                        : (value) => setState(() {
                               _selectedRole = value!;
-                            });
-                          },
+                            }),
                   ),
+
                   const SizedBox(height: 16),
-                  // Terms & Conditions Checkbox
+
+                  // Terms Checkbox
                   Row(
                     children: [
                       Checkbox(
                         value: _agreeToTerms,
                         onChanged: _isLoading
                             ? null
-                            : (value) {
-                                setState(() {
+                            : (value) => setState(() {
                                   _agreeToTerms = value!;
-                                });
-                              },
+                                }),
                         checkColor: Colors.white,
-                        activeColor: Color(0xFFE74D3D),
+                        activeColor: const Color(0xFFE74D3D),
                       ),
-                      const Text(
-                        'Agree with ',
-                        style: TextStyle(color: Colors.white),
-                      ),
+                      const Text('Agree with ', style: TextStyle(color: Colors.white)),
                       GestureDetector(
-                        onTap: () {
-                          // Navigate to Terms & Conditions page
-                        },
+                        onTap: () {},
                         child: const Text(
                           'Terms & Conditions',
                           style: TextStyle(
@@ -210,12 +211,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                     ],
                   ),
+
                   const SizedBox(height: 16),
-                  // Sign Up Button
+
+                  // SIGN UP Button
                   ElevatedButton(
                     onPressed: _isLoading
                         ? null
-                        : () {
+                        : () async {
                             if (_formKey.currentState!.validate()) {
                               if (_nameController.text.isEmpty) {
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -226,6 +229,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 );
                                 return;
                               }
+
                               if (!_agreeToTerms) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
@@ -238,53 +242,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 );
                                 return;
                               }
+
                               _formKey.currentState!.save();
-                              setState(() {
-                                _isLoading = true;
-                              });
-                              try {
-                                FirebaseAuth.instance
-                                    .createUserWithEmailAndPassword(
-                                      email: _emailController.text.trim(),
-                                      password: _passwordController.text,
-                                    )
-                                    .then((userCredential) async {
-                                  await FirebaseFirestore.instance
-                                      .collection('users')
-                                      .doc(userCredential.user!.uid)
-                                      .set({
-                                    'email': _emailController.text.trim(),
-                                    'name': _nameController.text.trim(),
-                                    'role': _selectedRole.toLowerCase(),
-                                    'createdAt': FieldValue.serverTimestamp(),
-                                    'isAdmin': false,
-                                  });
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => const HomeScreen(),
-                                    ),
-                                  );
-                                });
-                              } on FirebaseAuthException catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      e.message ?? 'Sign-up failed',
-                                      style: const TextStyle(color: Colors.white),
-                                    ),
-                                    backgroundColor: Colors.grey[800],
-                                  ),
-                                );
-                              } finally {
-                                setState(() {
-                                  _isLoading = false;
-                                });
-                              }
+
+                              final email = _emailController.text.trim();
+                              final password = _passwordController.text;
+
+                              await _handleSubmit(email, password);
                             }
                           },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFFE74D3D),
+                      backgroundColor: const Color(0xFFE74D3D),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
@@ -308,27 +276,24 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             ),
                           ),
                   ),
+
                   const SizedBox(height: 24),
-                  // Divider with "or sign up with"
+
+                  // OR Divider
                   Row(
                     children: [
-                      Expanded(
-                        child: Divider(color: Colors.grey[600]),
-                      ),
+                      Expanded(child: Divider(color: Colors.grey[600])),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Text(
-                          'or sign up with',
-                          style: TextStyle(color: Colors.grey[600]),
-                        ),
+                        child: Text('or sign up with', style: TextStyle(color: Colors.grey[600])),
                       ),
-                      Expanded(
-                        child: Divider(color: Colors.grey[600]),
-                      ),
+                      Expanded(child: Divider(color: Colors.grey[600])),
                     ],
                   ),
+
                   const SizedBox(height: 16),
-                  // Social Login Buttons
+
+                  // Social Buttons (not functional)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -339,8 +304,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       _buildSocialButton(Icons.facebook, () {}),
                     ],
                   ),
+
                   const SizedBox(height: 24),
-                  // Sign In Link
+
+                  // Sign In link
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -349,11 +316,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         style: TextStyle(color: Colors.white),
                       ),
                       GestureDetector(
-                        onTap: _isLoading
-                            ? null
-                            : () {
-                                Navigator.pop(context);
-                              },
+                        onTap: _isLoading ? null : () => Navigator.pop(context),
                         child: const Text(
                           'Sign In',
                           style: TextStyle(
@@ -382,11 +345,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           shape: BoxShape.circle,
           color: Colors.grey[800],
         ),
-        child: Icon(
-          icon,
-          color: Colors.white,
-          size: 30,
-        ),
+        child: Icon(icon, color: Colors.white, size: 30),
       ),
     );
   }

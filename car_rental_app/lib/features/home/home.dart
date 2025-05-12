@@ -125,18 +125,18 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             // Category Tabs
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildCategoryTab('All', isSelected: true),
-                  _buildCategoryTab('Car'),
-                  _buildCategoryTab('Bike'),
-                  _buildCategoryTab('Van'),
-                ],
-              ),
-            ),
+            // Padding(
+            //   padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            //   child: Row(
+            //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            //     children: [
+            //       _buildCategoryTab('All', isSelected: true),
+            //       _buildCategoryTab('Car'),
+            //       _buildCategoryTab('Bike'),
+            //       _buildCategoryTab('Van'),
+            //     ],
+            //   ),
+            // ),
             const SizedBox(height: 16),
             // Recommended Locations
             Padding(
@@ -150,17 +150,17 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                children: [
-                  Expanded(child: _buildLocationCard('Danusha rent cars', '5.0', 'Car Rental Agency', 'Homagama', 'Open 24 hours', '077 123 4567')),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildLocationCard('VS rent cars', '5.0', 'Car Rental Agency', '', 'Open 24 hours', '077 123 4567')),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
+            // Padding(
+            //   padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            //   child: Row(
+            //     children: [
+            //       Expanded(child: _buildLocationCard('Danusha rent cars', '5.0', 'Car Rental Agency', 'Homagama', 'Open 24 hours', '077 123 4567')),
+            //       const SizedBox(width: 16),
+            //       Expanded(child: _buildLocationCard('VS rent cars', '5.0', 'Car Rental Agency', '', 'Open 24 hours', '077 123 4567')),
+            //     ],
+            //   ),
+            // ),
+            // const SizedBox(height: 16),
             // Most Rented Vehicles
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -174,14 +174,39 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: _buildVehicleCard(
-                'Honda Civic',
-                'Automatic/Manual',
-                'Homagama',
-                'Rs 6,000 / DAY',
-                isBooked: true,
+              padding: const EdgeInsets.all(8.0), // Add required padding
+              child: Column(
+                children: [
+                  _buildVehicleCard(
+                    'Toyota Corolla',
+                    'Automatic',
+                    'Homagama',
+                    'Rs 5,000 / DAY',
+                  ),
+                  const SizedBox(height: 8),
+                  _buildVehicleCard(
+                    'Honda Civic',
+                    'Automatic/Manual',
+                    'Homagama',
+                    'Rs 6,000 / DAY',
+                  ),
+                  const SizedBox(height: 8),
+                  _buildVehicleCard(
+                    'Honda Civic',
+                    'Automatic/Manual',
+                    'Homagama',
+                    'Rs 6,000 / DAY',
+                  ),
+                ],
               ),
+              // padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              // child: _buildVehicleCard(
+              //   'Honda Civic',
+              //   'Automatic/Manual',
+              //   'Homagama',
+              //   'Rs 6,000 / DAY',
+              //   isBooked: true,
+              // ),
             ),
           ],
         ),
