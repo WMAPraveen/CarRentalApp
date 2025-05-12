@@ -183,6 +183,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     _buildFixedSizeCard('assets/images/I3.png'),
                     SizedBox(width: _cardSpacing),
                     _buildFixedSizeCard('assets/images/I4.png'),
+                    SizedBox(width: _cardWidth), // ✅ extra padding to fix last card cut-off
                   ],
                 ),
               ),
