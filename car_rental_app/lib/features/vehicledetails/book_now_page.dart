@@ -144,6 +144,9 @@ class _BookNowPageState extends State<BookNowPage> {
         backgroundColor: Colors.black,
         centerTitle: true,
         elevation: 0,
+        iconTheme: IconThemeData(
+          color: Colors.white, // Changes the back button color
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -704,7 +707,7 @@ class _BookNowPageState extends State<BookNowPage> {
                 onPressed: () {
                   // Handle contact click
                 },
-                icon: const Icon(Icons.support_agent, color: Colors.red),
+                icon: const Icon(Icons.support_agent, color: Colors.black),
                 label: const Text(
                   'Contact Support',
                   style: TextStyle(
