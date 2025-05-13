@@ -567,18 +567,18 @@ class _BookNowPageState extends State<BookNowPage> {
                   const SizedBox(height: 16),
 
                   // Supported cards
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8.0),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        _CardIcon(name: 'Visa'),
-                        SizedBox(width: 12),
-                        _CardIcon(name: 'MasterCard'),
-                        SizedBox(width: 12),
-                        _CardIcon(name: 'Amex'),
-                        SizedBox(width: 12),
-                        _CardIcon(name: 'Discover'),
+                        CreditCardIcon(type: CreditCardType.visa),
+                        const SizedBox(width: 12),
+                        CreditCardIcon(type: CreditCardType.mastercard),
+                        const SizedBox(width: 12),
+                        CreditCardIcon(type: CreditCardType.amex),
+                        const SizedBox(width: 12),
+                        CreditCardIcon(type: CreditCardType.discover),
                       ],
                     ),
                   ),
@@ -726,6 +726,172 @@ class _BookNowPageState extends State<BookNowPage> {
   }
 }
 
+// Credit card type enum
+enum CreditCardType {
+  visa,
+  mastercard,
+  amex,
+  discover,
+}
+
+// Credit card icon widget
+class CreditCardIcon extends StatelessWidget {
+  final CreditCardType type;
+
+  const CreditCardIcon({Key? key, required this.type}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade300),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: _buildCardLogo(),
+    );
+  }
+
+  Widget _buildCardLogo() {
+    switch (type) {
+      case CreditCardType.visa:
+        return _buildVisaLogo();
+      case CreditCardType.mastercard:
+        return _buildMastercardLogo();
+      case CreditCardType.amex:
+        return _buildAmexLogo();
+      case CreditCardType.discover:
+        return _buildDiscoverLogo();
+    }
+  }
+
+  // VISA logo
+  Widget _buildVisaLogo() {
+    return Row(
+      children: [
+        Container(
+          height: 20,
+          width: 32,
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A1F71),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          alignment: Alignment.center,
+          child: const Text(
+            'VISA',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              fontStyle: FontStyle.italic,
+              letterSpacing: -0.5,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Mastercard logo
+  Widget _buildMastercardLogo() {
+    return SizedBox(
+      height: 20,
+      width: 32,
+      child: Stack(
+        children: [
+          Positioned(
+            left: 0,
+            child: Container(
+              height: 20,
+              width: 20,
+              decoration: const BoxDecoration(
+                color: Color(0xFFFF5F00),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Positioned(
+            right: 0,
+            child: Container(
+              height: 20,
+              width: 20,
+              decoration: const BoxDecoration(
+                color: Color(0xFFEB001B),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Positioned(
+            left: 6,
+            child: Container(
+              height: 20,
+              width: 20,
+              decoration: BoxDecoration(
+                color: const Color(0xFF0099DF).withOpacity(0.8),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Amex logo
+  Widget _buildAmexLogo() {
+    return Container(
+      height: 20,
+      width: 32,
+      decoration: BoxDecoration(
+        color: const Color(0xFF2E77BB),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      alignment: Alignment.center,
+      child: const Text(
+        'AMEX',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 9,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  // Discover logo
+  Widget _buildDiscoverLogo() {
+    return Container(
+      height: 20,
+      width: 40,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFF67F00), Color(0xFFFF9B36)],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      alignment: Alignment.center,
+      child: const Text(
+        'DISCOVER',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 7,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
 class _FeatureItem extends StatelessWidget {
   final IconData icon;
   final String text;
@@ -747,32 +913,6 @@ class _FeatureItem extends StatelessWidget {
         const SizedBox(height: 4),
         Text(text, style: TextStyle(fontSize: 12, color: Colors.grey.shade700)),
       ],
-    );
-  }
-}
-
-class _CardIcon extends StatelessWidget {
-  final String name;
-
-  const _CardIcon({required this.name});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: Text(
-        name,
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          color: Colors.grey.shade700,
-          fontSize: 12,
-        ),
-      ),
     );
   }
 }
