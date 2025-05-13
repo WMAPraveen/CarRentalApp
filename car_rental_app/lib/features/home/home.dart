@@ -15,31 +15,33 @@ class _HomeScreenState extends State<HomeScreen> {
   final ScrollController _scrollController = ScrollController();
   late Timer _scrollTimer;
   double _scrollPosition = 0;
-  late double _cardWidth;
+  final double _cardWidth = 300;
   final double _cardSpacing = 12;
 
   @override
   void initState() {
     super.initState();
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _cardWidth = MediaQuery.of(context).size.width - 32;
+      _startAutoScroll();
+    });
+  }
 
-      _scrollTimer = Timer.periodic(const Duration(seconds: 6), (_) {
-        final maxScroll = _scrollController.position.maxScrollExtent;
+  void _startAutoScroll() {
+    _scrollTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      final nextPosition = _scrollPosition + _cardWidth + _cardSpacing;
 
-        if (_scrollPosition + _cardWidth + _cardSpacing > maxScroll) {
-          _scrollPosition = 0;
-        } else {
-          _scrollPosition += _cardWidth + _cardSpacing;
-        }
+      if (nextPosition > maxScroll) {
+        _scrollPosition = 0;
+      } else {
+        _scrollPosition = nextPosition;
+      }
 
-        _scrollController.animateTo(
-          _scrollPosition,
-          duration: const Duration(milliseconds: 600),
-          curve: Curves.easeInOut,
-        );
-      });
+      _scrollController.animateTo(
+        _scrollPosition,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeInOut,
+      );
     });
   }
 
@@ -61,8 +63,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    _cardWidth = MediaQuery.of(context).size.width - 32;
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -171,19 +171,19 @@ class _HomeScreenState extends State<HomeScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: SizedBox(
-                height: 280,
+                height: 200,
                 child: ListView(
                   controller: _scrollController,
                   scrollDirection: Axis.horizontal,
                   children: [
-                    _buildFixedSizeCard( 'assets/images/I1.png'),
+                    _buildFixedSizeCard('assets/images/I1.png'),
                     SizedBox(width: _cardSpacing),
-                    _buildFixedSizeCard( 'assets/images/I2.png'),
+                    _buildFixedSizeCard('assets/images/I2.png'),
                     SizedBox(width: _cardSpacing),
-                    _buildFixedSizeCard( 'assets/images/I3.png'),
+                    _buildFixedSizeCard('assets/images/I3.png'),
                     SizedBox(width: _cardSpacing),
-                    _buildFixedSizeCard( 'assets/images/I4.png'),
-                  
+                    _buildFixedSizeCard('assets/images/I4.png'),
+                    SizedBox(width: _cardWidth), // ✅ extra padding to fix last card cut-off
                   ],
                 ),
               ),
@@ -219,40 +219,25 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildFixedSizeCard( String imagePath) {
+  Widget _buildFixedSizeCard(String imagePath) {
     return SizedBox(
       width: _cardWidth,
-      height: 190,
+      height: 180,
       child: Card(
         elevation: 4,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         clipBehavior: Clip.antiAlias,
-        child: Stack(
-          children: [
-            Image.asset(
-              imagePath,
-              fit: BoxFit.cover,
-              width: double.infinity,
-              height: double.infinity,
-              errorBuilder: (context, error, stackTrace) {
-                  return const Center(
-                    child: Text(
-                      'Image failed to load',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  );
-                },
-              
-            ),
-            // Container(
-            //   color: Colors.black.withOpacity(0.4),
-            //   alignment: Alignment.center,
-            //   child: Text(
-            //     label,
-            //     style: const TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold),
-            //   ),
-            // ),
-          ],
+        child: Image.asset(
+          imagePath,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return const Center(
+              child: Text(
+                'Image failed to load',
+                style: TextStyle(color: Colors.white),
+              ),
+            );
+          },
         ),
       ),
     );
