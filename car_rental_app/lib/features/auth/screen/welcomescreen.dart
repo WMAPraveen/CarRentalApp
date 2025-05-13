@@ -75,7 +75,7 @@ class WelcomeScreen extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 70),
               ElevatedButton(
                 onPressed: () {
                   // Navigate to the next screen (e.g., car listing or registration)
@@ -100,7 +100,7 @@ class WelcomeScreen extends StatelessWidget {
                 ),
               ),
               
-              const SizedBox(height: 20),
+              const SizedBox(height: 120),
             ],
           ),
         ),
