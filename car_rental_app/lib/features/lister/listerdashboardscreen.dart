@@ -77,6 +77,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           appBar: AppBar(
             backgroundColor: Colors.black,
             title: Row(
+              
               children: [
                 GestureDetector(
                   onTap: () {
@@ -88,6 +89,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     );
                   },
                   child: CircleAvatar(
+                    
                     backgroundImage: AssetImage('assets/profile.jpg'),
                     radius: 18,
                   ),
@@ -95,8 +97,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 SizedBox(width: 12),
                 Text(
                   'Welcome to Dashboard',
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(color: Colors.white,fontSize: 17),
                 ),
+                
               ],
             ),
             actions: [
@@ -117,6 +120,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
             child: Column(
+              
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 GridView.count(
