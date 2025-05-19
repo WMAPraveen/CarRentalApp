@@ -1,3 +1,5 @@
+// import 'package:car_rental_app/features/rating/rating_page.dart';
+import 'package:car_rental_app/features/vehicledetails/ratingpage.dart';
 import 'package:car_rental_app/features/vehicledetails/vehicledetails.dart';
 import 'package:flutter/material.dart';
 
@@ -38,8 +40,6 @@ class _ShopeState extends State<Shope> with SingleTickerProviderStateMixin {
       child: Column(
         children: [
           const SizedBox(height: 16),
-
-          // First card
           InkWell(
             onTap: () {
               Navigator.push(
@@ -57,8 +57,6 @@ class _ShopeState extends State<Shope> with SingleTickerProviderStateMixin {
               ),
             ),
           ),
-
-          // Second card
           InkWell(
             onTap: () {
               Navigator.push(
@@ -92,7 +90,6 @@ class _ShopeState extends State<Shope> with SingleTickerProviderStateMixin {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Cover Image + More Info button
                   Stack(
                     clipBehavior: Clip.none,
                     children: [
@@ -123,7 +120,14 @@ class _ShopeState extends State<Shope> with SingleTickerProviderStateMixin {
                               ),
                               minimumSize: const Size(60, 30),
                             ),
-                            onPressed: () {},
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>   RatingPage(),
+                                ),
+                              );
+                            },
                             child: const Text(
                               'More Info',
                               style: TextStyle(fontSize: 12),
@@ -134,8 +138,6 @@ class _ShopeState extends State<Shope> with SingleTickerProviderStateMixin {
                     ],
                   ),
                   const SizedBox(height: 30),
-
-                  // Title
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: Text(
@@ -144,8 +146,6 @@ class _ShopeState extends State<Shope> with SingleTickerProviderStateMixin {
                     ),
                   ),
                   const SizedBox(height: 8),
-
-                  // Location info
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: Text(
@@ -154,8 +154,6 @@ class _ShopeState extends State<Shope> with SingleTickerProviderStateMixin {
                     ),
                   ),
                   const SizedBox(height: 32),
-
-                  // Tabs
                   Container(
                     alignment: Alignment.centerLeft,
                     child: TabBar(
@@ -170,8 +168,6 @@ class _ShopeState extends State<Shope> with SingleTickerProviderStateMixin {
                       tabs: tabs.map((tab) => Tab(text: tab)).toList(),
                     ),
                   ),
-
-                  // Tab content
                   SizedBox(
                     height: 250,
                     child: TabBarView(
@@ -179,13 +175,10 @@ class _ShopeState extends State<Shope> with SingleTickerProviderStateMixin {
                       children: tabs.map((tab) => buildTabContent(tab)).toList(),
                     ),
                   ),
-
                   const SizedBox(height: 20),
                 ],
               ),
             ),
-
-            // Back Button
             Positioned(
               top: 10,
               left: 10,
@@ -210,3 +203,4 @@ class _ShopeState extends State<Shope> with SingleTickerProviderStateMixin {
     );
   }
 }
+

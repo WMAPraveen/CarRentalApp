@@ -1,6 +1,6 @@
 // vehicle_details.dart
 import 'package:flutter/material.dart';
-import 'book_now_page.dart';
+import 'bookpage.dart';
 
 class VehicleDetails extends StatelessWidget {
   final String vehicleName;
