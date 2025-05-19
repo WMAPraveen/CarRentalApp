@@ -1,4 +1,11 @@
 import 'package:car_rental_app/features/auth/screen/Loadingscreen.dart';
+import 'package:car_rental_app/features/auth/screen/location_screen.dart';
+import 'package:car_rental_app/features/auth/screen/signin.dart';
+import 'package:car_rental_app/features/auth/screen/welcomescreen.dart';
+import 'package:car_rental_app/features/home/home.dart';
+// import 'package:car_rental_app/features/auth/screen/dashboard_screen.dart';
+import 'package:car_rental_app/features/lister/listerdashboardscreen.dart';
+
 // import 'package:car_rental_app/features/home/home.dart';
 // import 'package:car_rental_app/features/vehicledetails/vehicledetailsscreen.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -21,6 +28,11 @@ class MyApp extends StatelessWidget {
       title: 'PetWell',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        bottomNavigationBarTheme: BottomNavigationBarThemeData(
+          // backgroundColor: Colors.transparent,
+          selectedItemColor: Colors.black,
+          unselectedItemColor: Colors.transparent,
+        ),
         primarySwatch: Colors.blue,
         inputDecorationTheme: InputDecorationTheme(
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -41,7 +53,7 @@ class MyApp extends StatelessWidget {
       // home: const HomeScreen(),
       // home: const VehicleDetailsScreen(),
       // home: const SignInScreen(),
-      home: const LoadingScreen(),
+      home:LocationScreen(),
     );
   }
 }

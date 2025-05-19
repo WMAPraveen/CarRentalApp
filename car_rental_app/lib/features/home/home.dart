@@ -1,4 +1,9 @@
 import 'dart:async';
+import 'package:car_rental_app/features/auth/screen/profile_screen.dart';
+
+import 'package:car_rental_app/features/home/bookmark_page.dart';
+import 'package:car_rental_app/widgets/customer_drawer.dart';
+ // Add this import
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +17,74 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  int _selectedIndex = 2;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>(); // Add this line
+
+  final List<Widget> _pages = [
+    BookmarkPage(),
+    const Placeholder(),
+    const HomeContent(),
+    ProfileScreen(),
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+  
+  // Add a method to handle logout
+  void _handleLogout() {
+    // Add any additional logout logic here
+    // For example, navigate to login screen
+    // Navigator.of(context).pushAndRemoveUntil(
+    //   MaterialPageRoute(builder: (context) => LoginScreen()),
+    //   (route) => false,
+    // );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      key: _scaffoldKey, // Add this line
+      drawer: CustomDrawer(onLogout: _handleLogout), // Update this line to pass the callback
+      body: _pages[_selectedIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        selectedItemColor: Colors.black,
+        unselectedItemColor: Colors.grey,
+        showSelectedLabels: false,
+        showUnselectedLabels: false,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bookmark_border),
+            label: 'Bookmark',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.notifications_none),
+            label: 'Notifications',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            label: 'Profile',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class HomeContent extends StatefulWidget {
+  const HomeContent({super.key});
+
+  @override
+  State<HomeContent> createState() => _HomeContentState();
+}
+
+class _HomeContentState extends State<HomeContent> {
   final ScrollController _scrollController = ScrollController();
   late Timer _scrollTimer;
   double _scrollPosition = 0;
@@ -55,10 +128,25 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<String> _getUserName() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      final userDoc =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .get();
       return userDoc.data()?['name'] ?? 'User';
     }
     return 'User';
+  }
+
+  String _getTimeBasedGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 12) {
+      return 'Good Morning';
+    } else if (hour >= 12 && hour < 17) {
+      return 'Good Afternoon';
+    } else {
+      return 'Good Evening';
+    }
   }
 
   @override
@@ -69,14 +157,11 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: Colors.black,
         leading: IconButton(
           icon: const Icon(Icons.menu, color: Colors.white),
-          onPressed: () {},
+          onPressed: () {
+            // Modified to open drawer
+            Scaffold.of(context).openDrawer();
+          },
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications, color: Colors.white),
-            onPressed: () {},
-          ),
-        ],
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -85,7 +170,10 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Container(
               color: Colors.black,
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -100,7 +188,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       FutureBuilder<String>(
                         future: _getUserName(),
                         builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
                             return const Text(
                               'Hello...',
                               style: TextStyle(
@@ -123,7 +212,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ),
                               Text(
-                                'Good Morning',
+                                _getTimeBasedGreeting(),
                                 style: TextStyle(
                                   color: Colors.white.withOpacity(0.7),
                                   fontSize: 14,
@@ -183,7 +272,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     _buildFixedSizeCard('assets/images/I3.png'),
                     SizedBox(width: _cardSpacing),
                     _buildFixedSizeCard('assets/images/I4.png'),
-                    SizedBox(width: _cardWidth), // ✅ extra padding to fix last card cut-off
+                    SizedBox(width: _cardWidth),
                   ],
                 ),
               ),
@@ -249,10 +338,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => Shope(
-              title: title,
-              location: location,
-            ),
+            builder: (context) => Shope(title: title, location: location),
           ),
         );
       },
@@ -282,7 +368,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(location, style: const TextStyle(color: Colors.grey)),

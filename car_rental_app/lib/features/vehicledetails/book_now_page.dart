@@ -1,26 +1,6 @@
+import 'package:car_rental_app/features/vehicledetails/payment_details.dart';
+
 import 'package:flutter/material.dart';
-
-void main() {
-  runApp(const BookNowPage());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Car Booking',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.red,
-        fontFamily: 'Poppins',
-        scaffoldBackgroundColor: Colors.grey[100],
-      ),
-      home: const BookNowPage(),
-    );
-  }
-}
 
 class BookNowPage extends StatefulWidget {
   const BookNowPage({Key? key}) : super(key: key);
@@ -36,20 +16,7 @@ class _BookNowPageState extends State<BookNowPage> {
   final phoneController = TextEditingController();
   final emailController = TextEditingController();
   final idCardController = TextEditingController();
-  final cardNumberController = TextEditingController();
-  final cardHolderController = TextEditingController();
-  final expiryDateController = TextEditingController();
-  final cvvController = TextEditingController();
-  bool agreedToTerms = false;
   bool withDriver = true;
-  String selectedCardType = 'Visa';
-
-  final List<String> cardTypes = [
-    'Visa',
-    'MasterCard',
-    'American Express',
-    'Discover',
-  ];
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -99,33 +66,37 @@ class _BookNowPageState extends State<BookNowPage> {
     }
   }
 
-  void _submitBooking() {
+  void _navigateToPaymentPage() {
     if (nameController.text.isEmpty ||
         phoneController.text.isEmpty ||
         emailController.text.isEmpty ||
-        idCardController.text.isEmpty ||
-        cardNumberController.text.isEmpty ||
-        cardHolderController.text.isEmpty ||
-        expiryDateController.text.isEmpty ||
-        cvvController.text.isEmpty ||
-        !agreedToTerms) {
+        idCardController.text.isEmpty) {
       // Show validation error
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please fill all required fields and agree to terms'),
+          content: Text('Please fill all required fields'),
           backgroundColor: Colors.red,
         ),
       );
       return;
     }
 
-    // Here you would normally call your booking API
-
-    // Show success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Booking successful! Payment has been processed.'),
-        backgroundColor: Colors.green,
+    // Navigate to payment page
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => PaymentDetailsPage(
+              bookingDetails: {
+                'name': nameController.text,
+                'phone': phoneController.text,
+                'email': emailController.text,
+                'idCard': idCardController.text,
+                'date': selectedDate,
+                'time': selectedTime,
+                'withDriver': withDriver,
+              },
+            ),
       ),
     );
   }
@@ -136,17 +107,12 @@ class _BookNowPageState extends State<BookNowPage> {
       appBar: AppBar(
         title: const Text(
           'Book Your Car',
-          style: TextStyle(
-            color: Colors.white, // You can change this color to any other color
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.black,
         centerTitle: true,
         elevation: 0,
-        iconTheme: IconThemeData(
-          color: Colors.white, // Changes the back button color
-        ),
+        iconTheme: IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -368,226 +334,6 @@ class _BookNowPageState extends State<BookNowPage> {
 
             const SizedBox(height: 24),
 
-            // Payment information
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Payment Details',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          Icon(Icons.lock, size: 16, color: Colors.green),
-                          SizedBox(width: 4),
-                          Text(
-                            'Secure Payment',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.green,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Card type selector
-                  DropdownButtonFormField<String>(
-                    value: selectedCardType,
-                    decoration: InputDecoration(
-                      labelText: 'Card Type',
-                      floatingLabelStyle: TextStyle(color: Colors.black),
-                      prefixIcon: const Icon(
-                        Icons.credit_card,
-                        color: Colors.red,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(
-                          color: Colors.red,
-                          width: 2,
-                        ),
-                      ),
-                    ),
-                    items:
-                        cardTypes.map((String cardType) {
-                          return DropdownMenuItem<String>(
-                            value: cardType,
-                            child: Text(cardType),
-                          );
-                        }).toList(),
-                    onChanged: (String? newValue) {
-                      if (newValue != null) {
-                        setState(() {
-                          selectedCardType = newValue;
-                        });
-                      }
-                    },
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Card number
-                  TextField(
-                    controller: cardNumberController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Card Number',
-                      floatingLabelStyle: TextStyle(color: Colors.black),
-                      hintText: 'XXXX XXXX XXXX XXXX',
-                      prefixIcon: const Icon(
-                        Icons.credit_card,
-                        color: Colors.red,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(
-                          color: Colors.red,
-                          width: 2,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Card holder name
-                  TextField(
-                    controller: cardHolderController,
-                    decoration: InputDecoration(
-                      labelText: 'Card Holder Name',
-                      floatingLabelStyle: TextStyle(color: Colors.black),
-                      prefixIcon: const Icon(Icons.person, color: Colors.red),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(
-                          color: Colors.red,
-                          width: 2,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Expiry date and CVV
-                  Row(
-                    children: [
-                      // Expiry date
-                      Expanded(
-                        child: TextField(
-                          controller: expiryDateController,
-                          keyboardType: TextInputType.datetime,
-                          decoration: InputDecoration(
-                            labelText: 'Expiry (MM/YY)',
-                            floatingLabelStyle: TextStyle(color: Colors.black),
-                            hintText: 'MM/YY',
-                            prefixIcon: const Icon(
-                              Icons.date_range,
-                              color: Colors.red,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(
-                                color: Colors.red,
-                                width: 2,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(width: 16),
-
-                      // CVV
-                      Expanded(
-                        child: TextField(
-                          controller: cvvController,
-                          keyboardType: TextInputType.number,
-                          obscureText: true,
-                          decoration: InputDecoration(
-                            labelText: 'CVV',
-                            floatingLabelStyle: TextStyle(color: Colors.black),
-                            hintText: '123',
-                            prefixIcon: const Icon(
-                              Icons.security,
-                              color: Colors.red,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(
-                                color: Colors.red,
-                                width: 2,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Supported cards
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CreditCardIcon(type: CreditCardType.visa),
-                        const SizedBox(width: 12),
-                        CreditCardIcon(type: CreditCardType.mastercard),
-                        const SizedBox(width: 12),
-                        CreditCardIcon(type: CreditCardType.amex),
-                        const SizedBox(width: 12),
-                        CreditCardIcon(type: CreditCardType.discover),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
             // Driver option
             Container(
               padding: const EdgeInsets.all(16),
@@ -658,28 +404,12 @@ class _BookNowPageState extends State<BookNowPage> {
 
             const SizedBox(height: 24),
 
-            // Terms and conditions
-            CheckboxListTile(
-              title: const Text('I agree to the Terms and Conditions'),
-              value: agreedToTerms,
-              activeColor: Colors.black,
-              contentPadding: EdgeInsets.zero,
-              controlAffinity: ListTileControlAffinity.leading,
-              onChanged: (bool? value) {
-                setState(() {
-                  agreedToTerms = value ?? false;
-                });
-              },
-            ),
-
-            const SizedBox(height: 24),
-
             // Book Now button
             SizedBox(
               width: double.infinity,
               height: 54,
               child: ElevatedButton(
-                onPressed: _submitBooking,
+                onPressed: _navigateToPaymentPage,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,
                   foregroundColor: Colors.white,
@@ -689,7 +419,7 @@ class _BookNowPageState extends State<BookNowPage> {
                   elevation: 2,
                 ),
                 child: const Text(
-                  'BOOK & PAY NOW',
+                  'BOOK NOW',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -722,197 +452,6 @@ class _BookNowPageState extends State<BookNowPage> {
           ],
         ),
       ),
-    );
-  }
-}
-
-// Credit card type enum
-enum CreditCardType {
-  visa,
-  mastercard,
-  amex,
-  discover,
-}
-
-// Credit card icon widget
-class CreditCardIcon extends StatelessWidget {
-  final CreditCardType type;
-
-  const CreditCardIcon({Key? key, required this.type}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade300),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: _buildCardLogo(),
-    );
-  }
-
-  Widget _buildCardLogo() {
-    switch (type) {
-      case CreditCardType.visa:
-        return _buildVisaLogo();
-      case CreditCardType.mastercard:
-        return _buildMastercardLogo();
-      case CreditCardType.amex:
-        return _buildAmexLogo();
-      case CreditCardType.discover:
-        return _buildDiscoverLogo();
-    }
-  }
-
-  // VISA logo
-  Widget _buildVisaLogo() {
-    return Row(
-      children: [
-        Container(
-          height: 20,
-          width: 32,
-          decoration: BoxDecoration(
-            color: const Color(0xFF1A1F71),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          alignment: Alignment.center,
-          child: const Text(
-            'VISA',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              fontStyle: FontStyle.italic,
-              letterSpacing: -0.5,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // Mastercard logo
-  Widget _buildMastercardLogo() {
-    return SizedBox(
-      height: 20,
-      width: 32,
-      child: Stack(
-        children: [
-          Positioned(
-            left: 0,
-            child: Container(
-              height: 20,
-              width: 20,
-              decoration: const BoxDecoration(
-                color: Color(0xFFFF5F00),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Positioned(
-            right: 0,
-            child: Container(
-              height: 20,
-              width: 20,
-              decoration: const BoxDecoration(
-                color: Color(0xFFEB001B),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Positioned(
-            left: 6,
-            child: Container(
-              height: 20,
-              width: 20,
-              decoration: BoxDecoration(
-                color: const Color(0xFF0099DF).withOpacity(0.8),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Amex logo
-  Widget _buildAmexLogo() {
-    return Container(
-      height: 20,
-      width: 32,
-      decoration: BoxDecoration(
-        color: const Color(0xFF2E77BB),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      alignment: Alignment.center,
-      child: const Text(
-        'AMEX',
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 9,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  // Discover logo
-  Widget _buildDiscoverLogo() {
-    return Container(
-      height: 20,
-      width: 40,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFF67F00), Color(0xFFFF9B36)],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      alignment: Alignment.center,
-      child: const Text(
-        'DISCOVER',
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 7,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-}
-
-class _FeatureItem extends StatelessWidget {
-  final IconData icon;
-  final String text;
-
-  const _FeatureItem({required this.icon, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.red.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(icon, color: Colors.red, size: 22),
-        ),
-        const SizedBox(height: 4),
-        Text(text, style: TextStyle(fontSize: 12, color: Colors.grey.shade700)),
-      ],
     );
   }
 }

@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class AuthForm extends StatefulWidget {
@@ -29,6 +28,7 @@ class AuthForm extends StatefulWidget {
 
 class _AuthFormState extends State<AuthForm> {
   final _confirmPasswordController = TextEditingController();
+  bool _obscureConfirmPassword = true; // For Confirm Password toggle
 
   @override
   void dispose() {
@@ -43,7 +43,9 @@ class _AuthFormState extends State<AuthForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Email field
+          // Email Field
+          const Text("Email", style: TextStyle(color: Colors.white)),
+          const SizedBox(height: 8),
           TextFormField(
             controller: widget.emailController,
             keyboardType: TextInputType.emailAddress,
@@ -63,9 +65,8 @@ class _AuthFormState extends State<AuthForm> {
               if (value == null || value.isEmpty) {
                 return 'Please enter your email';
               }
-              if (!RegExp(
-                r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-              ).hasMatch(value)) {
+              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                  .hasMatch(value)) {
                 return 'Please enter a valid email address';
               }
               return null;
@@ -73,7 +74,9 @@ class _AuthFormState extends State<AuthForm> {
           ),
           const SizedBox(height: 16),
 
-          // Password field
+          // Password Field
+          const Text("Password", style: TextStyle(color: Colors.white)),
+          const SizedBox(height: 8),
           TextFormField(
             controller: widget.passwordController,
             obscureText: widget.obscurePassword,
@@ -94,7 +97,9 @@ class _AuthFormState extends State<AuthForm> {
                       : Icons.visibility,
                   color: Colors.white54,
                 ),
-                onPressed: widget.isLoading ? null : widget.onTogglePasswordVisibility,
+                onPressed: widget.isLoading
+                    ? null
+                    : widget.onTogglePasswordVisibility,
               ),
             ),
             style: const TextStyle(color: Colors.white),
@@ -108,14 +113,15 @@ class _AuthFormState extends State<AuthForm> {
               return null;
             },
           ),
-
           const SizedBox(height: 16),
 
-          // Confirm password field (only for sign up)
+          // Confirm Password Field (only if signing up)
           if (!widget.isSignIn) ...[
+            const Text("Confirm Password", style: TextStyle(color: Colors.white)),
+            const SizedBox(height: 8),
             TextFormField(
               controller: _confirmPasswordController,
-              obscureText: widget.obscurePassword,
+              obscureText: _obscureConfirmPassword,
               enabled: !widget.isLoading,
               decoration: InputDecoration(
                 hintText: '••••••••',
@@ -125,6 +131,22 @@ class _AuthFormState extends State<AuthForm> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide.none,
+                ),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscureConfirmPassword
+                        ? Icons.visibility_off
+                        : Icons.visibility,
+                    color: Colors.white54,
+                  ),
+                  onPressed: widget.isLoading
+                      ? null
+                      : () {
+                          setState(() {
+                            _obscureConfirmPassword =
+                                !_obscureConfirmPassword;
+                          });
+                        },
                 ),
               ),
               style: const TextStyle(color: Colors.white),

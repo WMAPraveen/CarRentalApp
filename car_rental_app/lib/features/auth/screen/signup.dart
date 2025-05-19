@@ -1,9 +1,9 @@
+import 'package:car_rental_app/features/auth/screen/signin.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../widgets/authform.dart';
-import '../../home/home.dart'; // For renter
-import 'package:car_rental_app/features/lister/listerdashboardscreen.dart'; // For lister
+import '../../../widgets/authform.dart';
+// <-- Make sure this import path is correct
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -49,17 +49,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
         'isAdmin': false,
       });
 
-      if (_selectedRole.toLowerCase() == 'lister') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const ListerDashboardScreen()),
-        );
-      } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Account created successfully! Please sign in.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      await Future.delayed(const Duration(seconds: 2)); // Optional delay
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const SignInScreen()),
+      );
     } on FirebaseAuthException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -113,6 +115,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     style: TextStyle(color: Colors.white70, fontSize: 16),
                   ),
                   const SizedBox(height: 32),
+                  const Text("Name", style: TextStyle(color: Colors.white)),
+                  const SizedBox(height: 8),
 
                   // Name Field
                   TextFormField(
@@ -152,10 +156,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         _obscurePassword = !_obscurePassword;
                       });
                     },
-                    onSubmit: (_, __) {}, // will trigger manually
+                    onSubmit: (_, __) {},
                   ),
 
                   const SizedBox(height: 16),
+                  const Text("Role", style: TextStyle(color: Colors.white)),
+                  const SizedBox(height: 8),
 
                   // Role Dropdown
                   DropdownButtonFormField<String>(

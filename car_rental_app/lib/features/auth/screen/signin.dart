@@ -2,7 +2,7 @@ import 'package:car_rental_app/features/lister/listerdashboardscreen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../widgets/authform.dart';
+import '../../../widgets/authform.dart';
 import './signup.dart';
 import './forgetpassword.dart';
 import '../../home/home.dart';
@@ -44,7 +44,7 @@ class _SignInScreenState extends State<SignInScreen> {
     if (isAdmin) {
       destinationScreen = const AdminDashboardScreen();
     } else if (role == 'lister') {
-      destinationScreen = const ListerDashboardScreen();
+      destinationScreen =  DashboardScreen();
     } else {
       destinationScreen = const HomeScreen();
     }
