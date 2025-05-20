@@ -1,14 +1,12 @@
 import 'dart:ui';
+import 'package:car_rental_app/features/auth/screen/signin.dart';
 import 'package:car_rental_app/features/lister/add_vehicle_screen.dart';
 import 'package:car_rental_app/features/lister/edit_profile_screen.dart';
 import 'package:car_rental_app/features/lister/vehicle_list_screen.dart';
 import 'package:car_rental_app/models/vehicle.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-
-// import 'add_vehicle_screen.dart';
-// import 'vehicle_list_screen.dart';
-// import 'edit_profile_screen.dart'; // <-- Import edit profile screen
 
 class DashboardScreen extends StatefulWidget {
   @override
@@ -22,6 +20,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int availableVehicles = 0;
   int maintenanceVehicles = 0;
   bool _isMenuOpen = false;
+  int _currentIndex = 0;
+
+  final List<Widget> _tabs = [Container(), AddVehicleScreen(), EditProfileScreen()];
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   void _navigateToAddVehicleScreen() async {
     final newVehicle = await Navigator.push(
@@ -32,13 +38,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (newVehicle != null && newVehicle is Vehicle) {
       setState(() {
         vehicles.add(newVehicle);
-        totalVehicles = vehicles.length;
-        rentedVehicles = vehicles.where((v) => v.isRented).length;
-        availableVehicles = vehicles.where((v) => !v.isRented).length;
-        maintenanceVehicles =
-            vehicles.where((v) => v.isUnderMaintenance).length;
+        _updateVehicleStats();
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${newVehicle.name} added successfully')),
+      );
     }
+  }
+
+  void _updateVehicleStats() {
+    totalVehicles = vehicles.length;
+    rentedVehicles = vehicles.where((v) => v.isRented).length;
+    availableVehicles = vehicles.where((v) => !v.isRented).length;
+    maintenanceVehicles = vehicles.where((v) => v.isUnderMaintenance).length;
   }
 
   void _toggleMenu() {
@@ -47,24 +59,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
-  void _logout() {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('Logged out')));
-    setState(() {
-      _isMenuOpen = false;
-    });
-  }
-
   List<FlSpot> getRentalData() {
     return [
-      FlSpot(1, 2),
-      FlSpot(5, 4),
-      FlSpot(10, 3),
-      FlSpot(15, 6),
-      FlSpot(20, 5),
-      FlSpot(25, 7),
-      FlSpot(30, 4),
+      FlSpot(1, 2), FlSpot(5, 4), FlSpot(10, 3),
+      FlSpot(15, 6), FlSpot(20, 5), FlSpot(25, 7), FlSpot(30, 4),
     ];
   }
 
@@ -77,29 +75,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
           appBar: AppBar(
             backgroundColor: Colors.black,
             title: Row(
-              
               children: [
                 GestureDetector(
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => EditProfileScreen(),
-                      ),
-                    );
+                    setState(() {
+                      _currentIndex = 2;
+                    });
                   },
                   child: CircleAvatar(
-                    
                     backgroundImage: AssetImage('assets/profile.jpg'),
                     radius: 18,
                   ),
                 ),
                 SizedBox(width: 12),
-                Text(
-                  'Welcome to Dashboard',
-                  style: TextStyle(color: Colors.white,fontSize: 17),
-                ),
-                
+                Text('Welcome to Dashboard', style: TextStyle(color: Colors.white, fontSize: 17)),
               ],
             ),
             actions: [
@@ -117,86 +106,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ],
           ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                GridView.count(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 1.3,
-                  children: [
-                    _buildStatCard(
-                      'Total Vehicles',
-                      totalVehicles,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (context) => VehicleListScreen(
-                                  vehicles: vehicles,
-                                  onEdit: (vehicle) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Edit feature is not yet implemented',
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  onDelete: (vehicle) {
-                                    setState(() {
-                                      vehicles.remove(vehicle);
-                                      totalVehicles = vehicles.length;
-                                      rentedVehicles =
-                                          vehicles
-                                              .where((v) => v.isRented)
-                                              .length;
-                                      availableVehicles =
-                                          vehicles
-                                              .where((v) => !v.isRented)
-                                              .length;
-                                      maintenanceVehicles =
-                                          vehicles
-                                              .where(
-                                                (v) => v.isUnderMaintenance,
-                                              )
-                                              .length;
-                                    });
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          '${vehicle.name} deleted',
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                          ),
-                        );
-                      },
-                    ),
-                    _buildStatCard('Rented Vehicles', rentedVehicles),
-                    _buildStatCard('Available Vehicles', availableVehicles),
-                    _buildStatCard('Maintenance Vehicles', maintenanceVehicles),
-                  ],
-                ),
-                SizedBox(height: 20),
-                _buildChartCard(),
-              ],
-            ),
-          ),
-          floatingActionButton: FloatingActionButton(
-            onPressed: _navigateToAddVehicleScreen,
-            backgroundColor: Colors.red,
-            child: Icon(Icons.add, color: Colors.white),
-            tooltip: 'Add Vehicle',
+          body: _currentIndex == 0 ? _buildDashboardContent() : _tabs[_currentIndex],
+          bottomNavigationBar: BottomNavigationBar(
+            currentIndex: _currentIndex,
+            backgroundColor: Colors.white,
+            selectedItemColor: Colors.red,
+            unselectedItemColor: Colors.grey,
+            onTap: (index) => setState(() => _currentIndex = index),
+            items: [
+              BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Dashboard'),
+              BottomNavigationBarItem(icon: Icon(Icons.add_circle), label: 'Add Vehicle'),
+              BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+            ],
           ),
         ),
         if (_isMenuOpen) ...[
@@ -217,7 +138,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: Colors.white,
               child: Container(
                 width: MediaQuery.of(context).size.width * 0.7,
-                height: double.infinity,
                 padding: EdgeInsets.fromLTRB(20, 100, 20, 40),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -235,25 +155,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Divider(color: Colors.grey),
                     ListTile(
                       leading: Icon(Icons.arrow_back, color: Colors.black),
-                      title: Text(
-                        'Back',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                      title: Text('Back', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500)),
                       onTap: () => setState(() => _isMenuOpen = false),
                     ),
                     ListTile(
                       leading: Icon(Icons.logout, color: Colors.red),
-                      title: Text(
-                        'Logout',
-                        style: TextStyle(
-                          color: Colors.red,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      onTap: _logout,
+                      title: Text('Logout', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                      onTap: () async {
+                        await FirebaseAuth.instance.signOut();
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(builder: (context) => SignInScreen()),
+                          (Route<dynamic> route) => false,
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -262,6 +176,56 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ],
+    );
+  }
+
+  Widget _buildDashboardContent() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GridView.count(
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1.3,
+            children: [
+              _buildStatCard('Total Vehicles', totalVehicles, onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => VehicleListScreen(
+                      vehicles: vehicles,
+                      onEdit: (vehicle) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Edit feature not yet implemented')),
+                        );
+                      },
+                      onDelete: (vehicle) {
+                        setState(() {
+                          vehicles.remove(vehicle);
+                          _updateVehicleStats();
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('${vehicle.name} deleted')),
+                        );
+                      },
+                    ),
+                  ),
+                );
+              }),
+              _buildStatCard('Rented Vehicles', rentedVehicles),
+              _buildStatCard('Available Vehicles', availableVehicles),
+              _buildStatCard('Maintenance Vehicles', maintenanceVehicles),
+            ],
+          ),
+          SizedBox(height: 20),
+          _buildChartCard(),
+        ],
+      ),
     );
   }
 
@@ -277,24 +241,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white70,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text(title, style: TextStyle(fontSize: 16, color: Colors.white70, fontWeight: FontWeight.bold)),
               SizedBox(height: 12),
-              Text(
-                value.toString(),
-                style: TextStyle(
-                  fontSize: 28,
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text(value.toString(), style: TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.bold)),
             ],
           ),
         ),
@@ -305,26 +254,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildMenuItem(String title, IconData icon) {
     return ListTile(
       leading: Icon(icon, color: Colors.black87),
-      title: Text(
-        title,
-        style: TextStyle(
-          color: Colors.black87,
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
+      title: Text(title, style: TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w500)),
       onTap: () {
         setState(() => _isMenuOpen = false);
-
         if (title == 'Profile') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => EditProfileScreen()),
-          );
+          Navigator.push(context, MaterialPageRoute(builder: (context) => EditProfileScreen()));
         } else {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('$title selected')));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$title selected')));
         }
       },
     );
@@ -340,14 +276,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "Monthly Rental Analysis",
-              style: TextStyle(
-                color: Colors.white70,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
+            Text('Monthly Rental Analysis', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 16)),
             SizedBox(height: 20),
             SizedBox(height: 270, child: _buildLineChart()),
           ],
@@ -377,10 +306,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               getTitlesWidget: (value, meta) {
                 final days = ['1', '5', '10', '15', '20', '25', '30'];
                 if (days.contains(value.toInt().toString())) {
-                  return Text(
-                    value.toInt().toString(),
-                    style: TextStyle(color: Colors.white70, fontSize: 10),
-                  );
+                  return Text(value.toInt().toString(), style: TextStyle(color: Colors.white70, fontSize: 10));
                 } else {
                   return const SizedBox.shrink();
                 }
@@ -392,10 +318,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               showTitles: true,
               interval: 1,
               getTitlesWidget: (value, meta) {
-                return Text(
-                  value.toInt().toString(),
-                  style: TextStyle(color: Colors.white70, fontSize: 10),
-                );
+                return Text(value.toInt().toString(), style: TextStyle(color: Colors.white70, fontSize: 10));
               },
             ),
           ),
@@ -404,10 +327,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         gridData: FlGridData(
           show: true,
-          getDrawingHorizontalLine:
-              (value) => FlLine(color: Colors.black, strokeWidth: 1),
-          getDrawingVerticalLine:
-              (value) => FlLine(color: Colors.black, strokeWidth: 0),
+          getDrawingHorizontalLine: (value) => FlLine(color: Colors.black, strokeWidth: 1),
+          getDrawingVerticalLine: (value) => FlLine(color: Colors.black, strokeWidth: 0),
         ),
       ),
     );

@@ -1,7 +1,11 @@
-import 'package:car_rental_app/features/home/home.dart';
-//import 'package:car_rental_app/features/vehicledetails/book_now_page.dart';
+
 
 import 'package:flutter/material.dart';
+import 'package:car_rental_app/features/home/home.dart';
+
+import 'package:car_rental_app/features/vehicledetails/bookpage.dart';
+// >>>>>>> 8d537d1fb7d4be44a5a661acad8839d163126929
+
 
 class PaymentSuccessPage extends StatelessWidget {
   const PaymentSuccessPage({Key? key}) : super(key: key);

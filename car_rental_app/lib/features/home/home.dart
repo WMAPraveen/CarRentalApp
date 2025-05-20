@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:car_rental_app/features/auth/screen/profile_screen.dart';
 
 import 'package:car_rental_app/features/home/bookmark_page.dart';
+import 'package:car_rental_app/features/lister/listerdashboardscreen.dart';
 import 'package:car_rental_app/widgets/customer_drawer.dart';
  // Add this import
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -25,6 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
     const Placeholder(),
     const HomeContent(),
     ProfileScreen(),
+    
   ];
 
   void _onItemTapped(int index) {
