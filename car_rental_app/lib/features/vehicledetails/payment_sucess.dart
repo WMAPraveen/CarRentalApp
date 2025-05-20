@@ -1,5 +1,5 @@
 import 'package:car_rental_app/features/home/home.dart';
-import 'package:car_rental_app/features/vehicledetails/book_now_page.dart';
+import 'package:car_rental_app/features/vehicledetails/bookpage.dart';
 
 import 'package:flutter/material.dart';
 
