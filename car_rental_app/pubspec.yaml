@@ -54,6 +54,7 @@ dependencies:
   fl_chart: ^0.65.0
   geocoding: ^3.0.0
   geolocator: ^14.0.0
+  flutter_map: ^8.1.1
 
 dev_dependencies:
   flutter_test:
