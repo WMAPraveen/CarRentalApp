@@ -62,7 +62,7 @@ class MyApp extends StatelessWidget {
       // home: const VehicleDetailsScreen(),
       // home: const SignInScreen(),
 
-      home:LocationScreen(),
+      home:LoadingScreen(),
 
      
     );

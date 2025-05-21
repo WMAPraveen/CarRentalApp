@@ -1,4 +1,5 @@
-// import 'package:car_rental_app/features/rating/rating_page.dart';
+import 'dart:convert'; // For base64 decoding
+import 'dart:typed_data'; // For Uint8List
 import 'package:car_rental_app/features/vehicledetails/ratingpage.dart';
 import 'package:car_rental_app/features/vehicledetails/vehicledetails.dart';
 import 'package:flutter/material.dart';
@@ -6,11 +7,13 @@ import 'package:flutter/material.dart';
 class Shope extends StatefulWidget {
   final String title;
   final String location;
+  final String? coverPicture; // Add coverPicture parameter
 
   const Shope({
     Key? key,
     required this.title,
     required this.location,
+    this.coverPicture, // Make it nullable
   }) : super(key: key);
 
   @override
@@ -81,6 +84,17 @@ class _ShopeState extends State<Shope> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    // Decode coverPicture if available
+    ImageProvider? coverImage;
+    if (widget.coverPicture != null && widget.coverPicture!.isNotEmpty) {
+      try {
+        final imageBytes = base64Decode(widget.coverPicture!);
+        coverImage = MemoryImage(imageBytes);
+      } catch (e) {
+        print('Error decoding cover image: $e');
+      }
+    }
+
     return Scaffold(
       body: SafeArea(
         child: Stack(
@@ -96,13 +110,26 @@ class _ShopeState extends State<Shope> with SingleTickerProviderStateMixin {
                       Container(
                         width: double.infinity,
                         height: 220,
-                        color: Colors.grey[300],
-                        child: const Center(
-                          child: Text(
-                            'Cover Image',
-                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                          ),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          image: coverImage != null
+                              ? DecorationImage(
+                                  image: coverImage,
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
                         ),
+                        child: coverImage == null
+                            ? const Center(
+                                child: Text(
+                                  'Cover Image',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              )
+                            : null,
                       ),
                       Positioned(
                         right: 16,
@@ -114,7 +141,8 @@ class _ShopeState extends State<Shope> with SingleTickerProviderStateMixin {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.black,
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(20),
                               ),
@@ -124,7 +152,7 @@ class _ShopeState extends State<Shope> with SingleTickerProviderStateMixin {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) =>   RatingPage(),
+                                  builder: (_) => RatingPage(),
                                 ),
                               );
                             },
@@ -142,7 +170,8 @@ class _ShopeState extends State<Shope> with SingleTickerProviderStateMixin {
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: Text(
                       widget.title,
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -163,7 +192,8 @@ class _ShopeState extends State<Shope> with SingleTickerProviderStateMixin {
                       unselectedLabelColor: Colors.black,
                       indicatorColor: const Color(0xFFE74D3D),
                       indicatorWeight: 3,
-                      labelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      labelStyle:
+                          const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                       labelPadding: const EdgeInsets.symmetric(horizontal: 24.0),
                       tabs: tabs.map((tab) => Tab(text: tab)).toList(),
                     ),
@@ -203,4 +233,3 @@ class _ShopeState extends State<Shope> with SingleTickerProviderStateMixin {
     );
   }
 }
-

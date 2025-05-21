@@ -1,10 +1,9 @@
 import 'dart:async';
+import 'dart:convert'; // For base64 decoding
+import 'dart:typed_data'; // For Uint8List
 import 'package:car_rental_app/features/auth/screen/profile_screen.dart';
-
 import 'package:car_rental_app/features/home/bookmark_page.dart';
-import 'package:car_rental_app/features/lister/listerdashboardscreen.dart';
 import 'package:car_rental_app/widgets/customer_drawer.dart';
- // Add this import
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -19,14 +18,13 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 2;
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>(); // Add this line
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   final List<Widget> _pages = [
     BookmarkPage(),
     const Placeholder(),
     const HomeContent(),
     ProfileScreen(),
-    
   ];
 
   void _onItemTapped(int index) {
@@ -34,11 +32,11 @@ class _HomeScreenState extends State<HomeScreen> {
       _selectedIndex = index;
     });
   }
-  
-  // Add a method to handle logout
+
   void _handleLogout() {
-    // Add any additional logout logic here
-    // For example, navigate to login screen
+    // Add logout logic here if needed
+    // Example:
+    // FirebaseAuth.instance.signOut();
     // Navigator.of(context).pushAndRemoveUntil(
     //   MaterialPageRoute(builder: (context) => LoginScreen()),
     //   (route) => false,
@@ -48,8 +46,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey, // Add this line
-      drawer: CustomDrawer(onLogout: _handleLogout), // Update this line to pass the callback
+      key: _scaffoldKey,
+      drawer: CustomDrawer(onLogout: _handleLogout),
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
@@ -130,11 +128,10 @@ class _HomeContentState extends State<HomeContent> {
   Future<String> _getUserName() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      final userDoc =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(user.uid)
-              .get();
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
       return userDoc.data()?['name'] ?? 'User';
     }
     return 'User';
@@ -160,7 +157,6 @@ class _HomeContentState extends State<HomeContent> {
         leading: IconButton(
           icon: const Icon(Icons.menu, color: Colors.white),
           onPressed: () {
-            // Modified to open drawer
             Scaffold.of(context).openDrawer();
           },
         ),
@@ -246,9 +242,7 @@ class _HomeContentState extends State<HomeContent> {
                 ],
               ),
             ),
-
             const SizedBox(height: 16),
-
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.0),
               child: Text(
@@ -256,9 +250,7 @@ class _HomeContentState extends State<HomeContent> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
-
             const SizedBox(height: 8),
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: SizedBox(
@@ -279,9 +271,7 @@ class _HomeContentState extends State<HomeContent> {
                 ),
               ),
             ),
-
             const SizedBox(height: 16),
-
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.0),
               child: Text(
@@ -289,19 +279,48 @@ class _HomeContentState extends State<HomeContent> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
-
             const SizedBox(height: 8),
-
+            // Dynamic vehicle cards from Firestore, only for listers
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Column(
-                children: [
-                  _buildVehicleCard('Wijesinghe Rent Cars', 'Matara'),
-                  const SizedBox(height: 8),
-                  _buildVehicleCard('Weerakkodi Car Rentals', 'Rathnapura'),
-                  const SizedBox(height: 8),
-                  _buildVehicleCard('Wijesundara Rent Service', 'Anuradhapura'),
-                ],
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('users')
+                    .where('role', isEqualTo: 'lister') // Filter for lister role
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    return const Center(child: Text('Error loading data'));
+                  }
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return const Center(child: Text('No listers found'));
+                  }
+
+                  final users = snapshot.data!.docs;
+
+                  return Column(
+                    children: users.map((userDoc) {
+                      final data = userDoc.data() as Map<String, dynamic>;
+                      final name = data['name'] ?? 'Unknown User';
+                      final location = data['location'] ?? 'Unknown Location';
+                      final coverPicture = data['coverPicture'] as String?;
+
+                      return Column(
+                        children: [
+                          _buildVehicleCard(
+                            name,
+                            location,
+                            coverPicture,
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+                      );
+                    }).toList(),
+                  );
+                },
               ),
             ),
           ],
@@ -334,13 +353,27 @@ class _HomeContentState extends State<HomeContent> {
     );
   }
 
-  Widget _buildVehicleCard(String title, String location) {
+  Widget _buildVehicleCard(String title, String location, String? coverPicture) {
+    ImageProvider? coverImage;
+    if (coverPicture != null && coverPicture.isNotEmpty) {
+      try {
+        final imageBytes = base64Decode(coverPicture);
+        coverImage = MemoryImage(imageBytes);
+      } catch (e) {
+        print('Error decoding cover image: $e');
+      }
+    }
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => Shope(title: title, location: location),
+            builder: (context) => Shope(
+              title: title,
+              location: location,
+              coverPicture: coverPicture,
+            ),
           ),
         );
       },
@@ -358,8 +391,18 @@ class _HomeContentState extends State<HomeContent> {
                 ),
                 child: Container(
                   height: 120,
-                  color: Colors.grey[300],
-                  child: const Center(child: Text('Image Placeholder')),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    image: coverImage != null
+                        ? DecorationImage(
+                            image: coverImage,
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                  ),
+                  child: coverImage == null
+                      ? const Center(child: Text('Image Placeholder'))
+                      : null,
                 ),
               ),
             ),
