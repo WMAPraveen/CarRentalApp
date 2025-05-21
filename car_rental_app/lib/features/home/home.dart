@@ -280,11 +280,14 @@ class _HomeContentState extends State<HomeContent> {
               ),
             ),
             const SizedBox(height: 8),
-            // Dynamic vehicle cards from Firestore
+            // Dynamic vehicle cards from Firestore, only for listers
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance.collection('users').snapshots(),
+                stream: FirebaseFirestore.instance
+                    .collection('users')
+                    .where('role', isEqualTo: 'lister') // Filter for lister role
+                    .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
@@ -293,7 +296,7 @@ class _HomeContentState extends State<HomeContent> {
                     return const Center(child: Text('Error loading data'));
                   }
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return const Center(child: Text('No users found'));
+                    return const Center(child: Text('No listers found'));
                   }
 
                   final users = snapshot.data!.docs;
@@ -369,7 +372,7 @@ class _HomeContentState extends State<HomeContent> {
             builder: (context) => Shope(
               title: title,
               location: location,
-              coverPicture: coverPicture, // Pass coverPicture
+              coverPicture: coverPicture,
             ),
           ),
         );
