@@ -1,6 +1,8 @@
 import 'package:car_rental_app/features/vehicledetails/payment_details.dart';
 
 import 'package:flutter/material.dart';
+import 'package:car_rental_app/features/vehicledetails/bookpage.dart';
+
 
 class BookNowPage extends StatefulWidget {
   const BookNowPage({Key? key}) : super(key: key);

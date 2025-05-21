@@ -1,7 +1,15 @@
+
+import 'package:car_rental_app/features/auth/screen/Loadingscreen.dart';
+import 'package:car_rental_app/features/auth/screen/location_screen.dart';
+import 'package:car_rental_app/features/auth/screen/signin.dart';
+
 // import 'package:car_rental_app/features/auth/screen/Loadingscreen.dart';
 // import 'package:car_rental_app/features/auth/screen/location_screen.dart';
 // import 'package:car_rental_app/features/auth/screen/signin.dart';
+
 import 'package:car_rental_app/features/auth/screen/welcomescreen.dart';
+import 'package:car_rental_app/features/home/home.dart';
+import 'package:car_rental_app/features/lister/listerdashboardscreen.dart';
 // import 'package:car_rental_app/features/home/home.dart';
 // import 'package:car_rental_app/features/auth/screen/dashboard_screen.dart';
 // import 'package:car_rental_app/features/lister/listerdashboardscreen.dart';
@@ -50,11 +58,13 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      // home: const HomeScreen(),
+      // home: const DashboardScreen(),
       // home: const VehicleDetailsScreen(),
       // home: const SignInScreen(),
-      // home:LocationScreen(),
-      home: const WelcomeScreen(),
+
+      home:LoadingScreen(),
+
+     
     );
   }
 }
