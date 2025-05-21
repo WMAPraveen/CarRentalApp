@@ -21,6 +21,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   String? _coverImageBase64; // Base64 for cover image
   final picker = ImagePicker();
 
+<<<<<<< HEAD
   // Initialize controllers without default text
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -80,10 +81,45 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to load user data.')),
         );
+=======
+  final TextEditingController _nameController = TextEditingController(text: 'User Name');
+  final TextEditingController _emailController = TextEditingController(text: 'user@example.com');
+  final TextEditingController _locationController = TextEditingController(text: 'Colombo, Sri Lanka');
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _bioController = TextEditingController(text: 'This is a short bio.');
+
+  Future<void> _pickImage(bool isProfile) async {
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      if (kIsWeb) {
+        var imageBytes = await pickedFile.readAsBytes();
+        setState(() {
+          if (isProfile) {
+            _webProfileImage = imageBytes;
+            _profileImageBase64 = base64Encode(imageBytes);
+          } else {
+            _webCoverImage = imageBytes;
+            _coverImageBase64 = base64Encode(imageBytes);
+          }
+        });
+      } else {
+        setState(() {
+          if (isProfile) {
+            _profileImage = File(pickedFile.path);
+            List<int> imageBytes = _profileImage!.readAsBytesSync();
+            _profileImageBase64 = base64Encode(imageBytes);
+          } else {
+            _coverImage = File(pickedFile.path);
+            List<int> imageBytes = _coverImage!.readAsBytesSync();
+            _coverImageBase64 = base64Encode(imageBytes);
+          }
+        });
+>>>>>>> 0bcfae9ceffe9d760babd77ac7d5521d65767f38
       }
     }
   }
 
+<<<<<<< HEAD
   Future<void> _pickImage(bool isProfile) async {
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
@@ -114,10 +150,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
+=======
+>>>>>>> 0bcfae9ceffe9d760babd77ac7d5521d65767f38
   Future<void> _saveChanges() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
+<<<<<<< HEAD
         // Basic validation
         if (_nameController.text.trim().isEmpty ||
             _emailController.text.trim().isEmpty) {
@@ -148,6 +187,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         if (_passwordController.text.trim().isNotEmpty) {
           await user.updatePassword(_passwordController.text.trim());
         }
+=======
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+          'name': _nameController.text.trim(),
+          'email': _emailController.text.trim(),
+          'location': _locationController.text.trim(),
+          'bio': _bioController.text.trim(),
+          'profilePicture': _profileImageBase64 ?? '',
+          'coverPicture': _coverImageBase64 ?? '',
+        });
+>>>>>>> 0bcfae9ceffe9d760babd77ac7d5521d65767f38
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Profile updated')),
@@ -161,7 +210,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     } catch (e) {
       print('Failed to update profile: $e');
       ScaffoldMessenger.of(context).showSnackBar(
+<<<<<<< HEAD
         SnackBar(content: Text('Failed to update profile: $e')),
+=======
+        SnackBar(content: Text('Failed to update profile.')),
+>>>>>>> 0bcfae9ceffe9d760babd77ac7d5521d65767f38
       );
     }
   }
@@ -282,6 +335,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       ),
     );
   }
+<<<<<<< HEAD
 
   @override
   void dispose() {
@@ -292,4 +346,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _bioController.dispose();
     super.dispose();
   }
+=======
+>>>>>>> 0bcfae9ceffe9d760babd77ac7d5521d65767f38
 }
