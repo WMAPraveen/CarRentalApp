@@ -1,9 +1,10 @@
 import 'package:car_rental_app/features/auth/screen/signin.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../../../widgets/authform.dart';
-// <-- Make sure this import path is correct
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -21,6 +22,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   String _selectedRole = 'Renter'; // Default role
+
+  // Google Sign-In instance
+  late GoogleSignIn _googleSignIn;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize Google Sign-In with different configurations for web and mobile
+    if (kIsWeb) {
+      _googleSignIn = GoogleSignIn(
+        clientId: 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com', // Replace with your web client ID
+        scopes: ['email', 'profile'],
+      );
+    } else {
+      _googleSignIn = GoogleSignIn(
+        scopes: ['email', 'profile'],
+      );
+    }
+  }
 
   @override
   void dispose() {
@@ -47,6 +67,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         'role': _selectedRole.toLowerCase(),
         'createdAt': FieldValue.serverTimestamp(),
         'isAdmin': false,
+        'authProvider': 'email',
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -56,7 +77,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         ),
       );
 
-      await Future.delayed(const Duration(seconds: 2)); // Optional delay
+      await Future.delayed(const Duration(seconds: 2));
 
       Navigator.pushReplacement(
         context,
@@ -67,6 +88,110 @@ class _SignUpScreenState extends State<SignUpScreen> {
         SnackBar(
           content: Text(
             e.message ?? 'Sign-up failed',
+            style: const TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.grey[800],
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    if (!_agreeToTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Please agree to the Terms & Conditions',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.grey[800],
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Sign out first to ensure account picker shows up
+      await _googleSignIn.signOut();
+      
+      // Trigger the authentication flow
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      
+      if (googleUser == null) {
+        // User canceled the sign-in
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Obtain the auth details from the request
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+      // Create a new credential
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // Sign in to Firebase with the Google credential
+      final UserCredential userCredential = 
+          await FirebaseAuth.instance.signInWithCredential(credential);
+
+      // Check if this is a new user
+      final bool isNewUser = userCredential.additionalUserInfo?.isNewUser ?? false;
+
+      if (isNewUser) {
+        // Create user document in Firestore for new users
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .set({
+          'email': userCredential.user!.email,
+          'name': userCredential.user!.displayName ?? '',
+          'role': _selectedRole.toLowerCase(),
+          'createdAt': FieldValue.serverTimestamp(),
+          'isAdmin': false,
+          'authProvider': 'google',
+          'photoURL': userCredential.user!.photoURL,
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Account created successfully with Google!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Signed in with Google successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+
+      // Navigate to the main app or sign-in screen
+      await Future.delayed(const Duration(seconds: 1));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const SignInScreen()),
+      );
+
+    } catch (error) {
+      print('Google Sign-In Error: $error');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Google sign-in failed: ${error.toString()}',
             style: const TextStyle(color: Colors.white),
           ),
           backgroundColor: Colors.grey[800],
@@ -122,7 +247,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   TextFormField(
                     controller: _nameController,
                     decoration: InputDecoration(
-                      hintText: 'Ex: Abc Efd',
+                      hintText: 'Name',
                       hintStyle: const TextStyle(color: Colors.white54),
                       filled: true,
                       fillColor: Colors.grey[800],
@@ -299,15 +424,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                   const SizedBox(height: 16),
 
-                  // Social Buttons (not functional)
+                  // Social Buttons
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildSocialButton(Icons.apple, () {}),
+                      _buildSocialButton(Icons.apple, () {
+                        // Apple Sign-In implementation can be added here
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Apple Sign-In not implemented yet')),
+                        );
+                      }),
                       const SizedBox(width: 16),
-                      _buildSocialButton(Icons.g_mobiledata, () {}),
+                      _buildSocialButton(Icons.g_mobiledata, _handleGoogleSignIn),
                       const SizedBox(width: 16),
-                      _buildSocialButton(Icons.facebook, () {}),
+                      _buildSocialButton(Icons.facebook, () {
+                        // Facebook Sign-In implementation can be added here
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Facebook Sign-In not implemented yet')),
+                        );
+                      }),
                     ],
                   ),
 
@@ -344,14 +479,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   Widget _buildSocialButton(IconData icon, VoidCallback onPressed) {
     return GestureDetector(
-      onTap: onPressed,
+      onTap: _isLoading ? null : onPressed,
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Colors.grey[800],
+          color: _isLoading ? Colors.grey[700] : Colors.grey[800],
         ),
-        child: Icon(icon, color: Colors.white, size: 30),
+        child: Icon(
+          icon, 
+          color: _isLoading ? Colors.grey[500] : Colors.white, 
+          size: 30
+        ),
       ),
     );
   }

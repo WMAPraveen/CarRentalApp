@@ -101,20 +101,22 @@ class _HomeContentState extends State<HomeContent> {
 
   void _startAutoScroll() {
     _scrollTimer = Timer.periodic(const Duration(seconds: 4), (_) {
-      final maxScroll = _scrollController.position.maxScrollExtent;
-      final nextPosition = _scrollPosition + _cardWidth + _cardSpacing;
+      if (_scrollController.hasClients) {
+        final maxScroll = _scrollController.position.maxScrollExtent;
+        final nextPosition = _scrollPosition + _cardWidth + _cardSpacing;
 
-      if (nextPosition > maxScroll) {
-        _scrollPosition = 0;
-      } else {
-        _scrollPosition = nextPosition;
+        if (nextPosition > maxScroll) {
+          _scrollPosition = 0;
+        } else {
+          _scrollPosition = nextPosition;
+        }
+
+        _scrollController.animateTo(
+          _scrollPosition,
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeInOut,
+        );
       }
-
-      _scrollController.animateTo(
-        _scrollPosition,
-        duration: const Duration(milliseconds: 600),
-        curve: Curves.easeInOut,
-      );
     });
   }
 
@@ -125,16 +127,23 @@ class _HomeContentState extends State<HomeContent> {
     super.dispose();
   }
 
-  Future<String> _getUserName() async {
+  Future<Map<String, dynamic>> _getCurrentUserData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
-      return userDoc.data()?['name'] ?? 'User';
+      try {
+        final userDoc =
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(user.uid)
+                .get();
+        if (userDoc.exists) {
+          return userDoc.data() ?? {};
+        }
+      } catch (e) {
+        print('Error fetching user data: $e');
+      }
     }
-    return 'User';
+    return {};
   }
 
   String _getTimeBasedGreeting() {
@@ -146,6 +155,27 @@ class _HomeContentState extends State<HomeContent> {
     } else {
       return 'Good Evening';
     }
+  }
+
+  Widget _buildProfileAvatar(String? profileImageBase64) {
+    if (profileImageBase64 != null && profileImageBase64.isNotEmpty) {
+      try {
+        final imageBytes = base64Decode(profileImageBase64);
+        return CircleAvatar(
+          radius: 20,
+          backgroundImage: MemoryImage(imageBytes),
+          backgroundColor: Colors.grey,
+        );
+      } catch (e) {
+        print('Error decoding profile image: $e');
+      }
+    }
+
+    return const CircleAvatar(
+      radius: 20,
+      backgroundColor: Colors.grey,
+      child: Icon(Icons.person, color: Colors.white),
+    );
   }
 
   @override
@@ -177,14 +207,33 @@ class _HomeContentState extends State<HomeContent> {
                 children: [
                   Row(
                     children: [
-                      const CircleAvatar(
-                        radius: 20,
-                        backgroundColor: Colors.grey,
-                        child: Icon(Icons.person, color: Colors.white),
+                      FutureBuilder<Map<String, dynamic>>(
+                        future: _getCurrentUserData(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const CircleAvatar(
+                              radius: 20,
+                              backgroundColor: Colors.grey,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            );
+                          }
+
+                          final userData = snapshot.data ?? {};
+                          final profileImage =
+                              userData['profilePicture'] as String?;
+
+                          return _buildProfileAvatar(profileImage);
+                        },
                       ),
                       const SizedBox(width: 8),
-                      FutureBuilder<String>(
-                        future: _getUserName(),
+                      FutureBuilder<Map<String, dynamic>>(
+                        future: _getCurrentUserData(),
                         builder: (context, snapshot) {
                           if (snapshot.connectionState ==
                               ConnectionState.waiting) {
@@ -197,7 +246,10 @@ class _HomeContentState extends State<HomeContent> {
                               ),
                             );
                           }
-                          final userName = snapshot.data ?? 'User';
+
+                          final userData = snapshot.data ?? {};
+                          final userName = userData['name'] ?? 'User';
+
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -284,41 +336,70 @@ class _HomeContentState extends State<HomeContent> {
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('users')
-                    .where('role', isEqualTo: 'lister') // Filter for lister role
-                    .snapshots(),
+                stream:
+                    FirebaseFirestore.instance
+                        .collection('users')
+                        .where(
+                          'role',
+                          isEqualTo: 'lister',
+                        ) // Filter for lister role
+                        .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
                   }
                   if (snapshot.hasError) {
-                    return const Center(child: Text('Error loading data'));
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Text(
+                          'Error loading data: ${snapshot.error}',
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    );
                   }
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return const Center(child: Text('No listers found'));
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: Text(
+                          'No listers found',
+                          style: TextStyle(fontSize: 16, color: Colors.grey),
+                        ),
+                      ),
+                    );
                   }
 
                   final users = snapshot.data!.docs;
 
                   return Column(
-                    children: users.map((userDoc) {
-                      final data = userDoc.data() as Map<String, dynamic>;
-                      final name = data['name'] ?? 'Unknown User';
-                      final location = data['location'] ?? 'Unknown Location';
-                      final coverPicture = data['coverPicture'] as String?;
+                    children:
+                        users.map((userDoc) {
+                          final data = userDoc.data() as Map<String, dynamic>;
+                          final name = data['name'] ?? 'Unknown User';
+                          final location =
+                              data['location'] ?? 'Unknown Location';
+                          final coverPicture = data['coverPicture'] as String?;
+                          final userId = userDoc.id;
 
-                      return Column(
-                        children: [
-                          _buildVehicleCard(
-                            name,
-                            location,
-                            coverPicture,
-                          ),
-                          const SizedBox(height: 8),
-                        ],
-                      );
-                    }).toList(),
+                          return Column(
+                            children: [
+                              _buildVehicleCard(
+                                name,
+                                location,
+                                coverPicture,
+                                userId,
+                              ),
+                              const SizedBox(height: 8),
+                            ],
+                          );
+                        }).toList(),
                   );
                 },
               ),
@@ -341,10 +422,20 @@ class _HomeContentState extends State<HomeContent> {
           imagePath,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
-            return const Center(
-              child: Text(
-                'Image failed to load',
-                style: TextStyle(color: Colors.white),
+            return Container(
+              color: Colors.grey[300],
+              child: const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.broken_image, size: 40, color: Colors.grey),
+                    SizedBox(height: 8),
+                    Text(
+                      'Image not found',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ],
+                ),
               ),
             );
           },
@@ -353,78 +444,125 @@ class _HomeContentState extends State<HomeContent> {
     );
   }
 
-  Widget _buildVehicleCard(String title, String location, String? coverPicture) {
-    ImageProvider? coverImage;
-    if (coverPicture != null && coverPicture.isNotEmpty) {
-      try {
-        final imageBytes = base64Decode(coverPicture);
-        coverImage = MemoryImage(imageBytes);
-      } catch (e) {
-        print('Error decoding cover image: $e');
-      }
-    }
-
+  Widget _buildVehicleCard(
+    String title,
+    String location,
+    String? coverPicture,
+    String userId,
+  ) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => Shope(
-              title: title,
-              location: location,
-              coverPicture: coverPicture,
-            ),
+            builder:
+                (context) => Shope(
+                  title: title,
+                  location: location,
+                  coverPicture: coverPicture,
+                ),
           ),
         );
       },
       child: Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        elevation: 3,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(10),
-                  topRight: Radius.circular(10),
-                ),
-                child: Container(
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    image: coverImage != null
-                        ? DecorationImage(
-                            image: coverImage,
-                            fit: BoxFit.cover,
-                          )
-                        : null,
-                  ),
-                  child: coverImage == null
-                      ? const Center(child: Text('Image Placeholder'))
-                      : null,
-                ),
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
+              child: Container(
+                height: 160,
+                decoration: BoxDecoration(color: Colors.grey[300]),
+                child: _buildCoverImage(coverPicture),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(12.0),
+              padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
-                  Text(location, style: const TextStyle(color: Colors.grey)),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.location_on,
+                        size: 16,
+                        color: Colors.grey,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          location,
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 14,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildCoverImage(String? coverPicture) {
+    if (coverPicture != null && coverPicture.isNotEmpty) {
+      try {
+        final imageBytes = base64Decode(coverPicture);
+        return Image.memory(
+          imageBytes,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (context, error, stackTrace) {
+            return _buildPlaceholderImage();
+          },
+        );
+      } catch (e) {
+        print('Error decoding cover image: $e');
+        return _buildPlaceholderImage();
+      }
+    }
+
+    return _buildPlaceholderImage();
+  }
+
+  Widget _buildPlaceholderImage() {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      color: Colors.grey[300],
+      child: const Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.image, size: 40, color: Colors.grey),
+          SizedBox(height: 8),
+          Text(
+            'Cover Image',
+            style: TextStyle(color: Colors.grey, fontSize: 14),
+          ),
+        ],
       ),
     );
   }
