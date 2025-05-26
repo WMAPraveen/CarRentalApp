@@ -114,8 +114,9 @@ class _ShopeState extends State<Shope> with SingleTickerProviderStateMixin {
                     context,
                     MaterialPageRoute(
                       builder: (_) => VehicleDetails(
-                        // vehicleId: vehicleId, // Pass vehicleId for accurate details
+                         vehicleId: vehicleId,
                         vehicleName: vehicleName,
+                         imageBase64: imageBase64,
                       ),
                     ),
                   );
@@ -126,35 +127,56 @@ class _ShopeState extends State<Shope> with SingleTickerProviderStateMixin {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: SizedBox(
-                    height: 150, // Set card height to accommodate larger image
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.all(16),
-                      title: Text(
-                        vehicleName,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      subtitle: Text(
-                        vehicleDescription,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      leading: vehicleImage != null
-                          ? Image(
-                              image: vehicleImage,
-                              width: 120, // Increased from 100
-                              height: 120, // Increased from 100
-                              fit: BoxFit.cover,
-                            )
-                          : const Icon(
-                              Icons.directions_car,
-                              size: 120, // Match icon size to image
-                            ),
-                    ),
-                  ),
+                 child: SizedBox(
+  height: 180,
+  child: Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      vehicleImage != null
+          ? Container(
+              height: 130,
+              width: 200,
+              margin: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                image: DecorationImage(
+                  image: vehicleImage,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            )
+          : const Icon(
+              Icons.directions_car,
+              size: 120,
+            ),
+      Expanded(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                vehicleName,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                vehicleDescription,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    ],
+  ),
+),
+
+
                 ),
               );
             },
