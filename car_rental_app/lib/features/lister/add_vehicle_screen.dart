@@ -1,15 +1,15 @@
-import 'dart:io';
+import 'dart:convert';
 import 'dart:typed_data';
-import 'package:car_rental_app/models/vehicle.dart';
-import 'package:car_rental_app/services/vehicle_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io'
-    if (dart.library.html) 'dart:html'
-    as html; // Conditionally import for File
+import 'package:car_rental_app/models/vehicle.dart';
 
 class AddVehicleScreen extends StatefulWidget {
+  const AddVehicleScreen({super.key});
+
   @override
   _AddVehicleScreenState createState() => _AddVehicleScreenState();
 }
@@ -21,8 +21,8 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   final _descriptionController = TextEditingController();
   String? _selectedType;
 
-  Uint8List? _webImage; // For web
-  XFile? _pickedImage; // For all
+  Uint8List? _imageBytes;
+  XFile? _pickedImage;
   final _picker = ImagePicker();
 
   final List<String> _vehicleTypes = ['Car', 'Van', 'SUV', 'Bike', 'Truck'];
@@ -35,93 +35,108 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
       );
 
       if (image != null) {
+        final bytes = await image.readAsBytes();
         setState(() {
           _pickedImage = image;
+          _imageBytes = bytes;
         });
-
-        if (kIsWeb) {
-          final bytes = await image.readAsBytes();
-          setState(() {
-            _webImage = bytes;
-          });
-        }
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error selecting image: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error selecting image: $e')),
+      );
     }
   }
 
   void _confirmSubmission() {
     if (_formKey.currentState!.validate()) {
       if (_pickedImage == null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Please select an image')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select an image')),
+        );
         return;
       }
 
       if (_selectedType == null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Please select a vehicle type')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a vehicle type')),
+        );
         return;
       }
 
       showDialog(
         context: context,
-        builder:
-            (ctx) => AlertDialog(
-              backgroundColor: Colors.grey[900],
-              title: Text('Confirm', style: TextStyle(color: Colors.white)),
-              content: Text(
-                'Do you want to add this vehicle?',
-                style: TextStyle(color: Colors.white70),
+        builder: (ctx) => AlertDialog(
+          backgroundColor: Colors.grey[900],
+          title: const Text('Confirm', style: TextStyle(color: Colors.white)),
+          content: const Text(
+            'Do you want to add this vehicle?',
+            style: TextStyle(color: Colors.white70),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: Colors.grey[400]),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: Text(
-                    'Cancel',
-                    style: TextStyle(color: Colors.grey[400]),
-                  ),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                  ),
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    _submitForm();
-                  },
-                  child: Text('Yes', style: TextStyle(color: Colors.black)),
-                ),
-              ],
             ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+              ),
+              onPressed: () {
+                Navigator.pop(ctx);
+                _submitForm();
+              },
+              child: const Text('Yes', style: TextStyle(color: Colors.black)),
+            ),
+          ],
+        ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please fill all required fields')),
+        const SnackBar(content: Text('Please fill all required fields')),
       );
     }
   }
 
   void _submitForm() async {
-    final newVehicle = Vehicle(
-      id: DateTime.now().toString(),
-      name: _nameController.text,
-      type: _selectedType!,
-      pricePerDay: double.parse(_priceController.text),
-      imagePath: _pickedImage!.path, // You can change logic here for Web saving
-      description: _descriptionController.text,
-    );
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('You must be logged in to add a vehicle')),
+        );
+        return;
+      }
 
-    List<Vehicle> currentList = await VehicleStorage.loadVehicles();
-    currentList.add(newVehicle);
-    await VehicleStorage.saveVehicles(currentList);
+      final base64Image = base64Encode(_imageBytes!);
+      final vehicleId = FirebaseFirestore.instance.collection('vehicles').doc().id; // Generate ID
 
-    Navigator.pop(context, newVehicle);
+      final newVehicle = Vehicle(
+        id: vehicleId,
+        name: _nameController.text,
+        type: _selectedType!,
+        pricePerDay: double.parse(_priceController.text),
+        imageBase64: base64Image,
+        description: _descriptionController.text.isEmpty ? null : _descriptionController.text,
+        userId: user.uid,
+        isRented: false,
+        isUnderMaintenance: false,
+      );
+
+      await FirebaseFirestore.instance
+          .collection('vehicles')
+          .doc(vehicleId)
+          .set(newVehicle.toJson());
+
+      Navigator.pop(context, newVehicle);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error adding vehicle: $e')),
+      );
+    }
   }
 
   @override
@@ -129,7 +144,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text("Add Your Vehicle"),
+        title: const Text("Add Your Vehicle"),
         backgroundColor: Colors.grey[900],
         foregroundColor: Colors.white,
       ),
@@ -144,26 +159,23 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                 _buildTextField(
                   controller: _nameController,
                   label: "Vehicle Name",
-                  validator:
-                      (value) =>
-                          value!.isEmpty ? "Please enter a vehicle name" : null,
+                  validator: (value) =>
+                      value!.isEmpty ? "Please enter a vehicle name" : null,
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   value: _selectedType,
                   decoration: _inputDecoration("Vehicle Type"),
                   dropdownColor: Colors.grey[850],
-                  style: TextStyle(color: Colors.white),
-                  items:
-                      _vehicleTypes.map((type) {
-                        return DropdownMenuItem(value: type, child: Text(type));
-                      }).toList(),
+                  style: const TextStyle(color: Colors.white),
+                  items: _vehicleTypes.map((type) {
+                    return DropdownMenuItem(value: type, child: Text(type));
+                  }).toList(),
                   onChanged: (value) => setState(() => _selectedType = value),
-                  validator:
-                      (value) =>
-                          value == null ? 'Please select a vehicle type' : null,
+                  validator: (value) =>
+                      value == null ? 'Please select a vehicle type' : null,
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 _buildTextField(
                   controller: _priceController,
                   label: "Price Per Day",
@@ -171,20 +183,20 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                   validator: (value) {
                     if (value == null || value.isEmpty) return 'Enter a price';
                     final price = double.tryParse(value);
-                    if (price == null || price <= 0)
-                      return 'Enter a valid number';
+                    if (price == null || price <= 0) return 'Enter a valid number';
                     return null;
                   },
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 _buildTextField(
                   controller: _descriptionController,
                   label: "Description (Optional)",
                   maxLines: 3,
+                  validator: null,
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 GestureDetector(
-                  onTap: () => _showImageSourceDialog(),
+                  onTap: _showImageSourceDialog,
                   child: Container(
                     height: 200,
                     width: double.infinity,
@@ -193,76 +205,69 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: Colors.grey[700]!, width: 1),
                     ),
-                    child:
-                        _pickedImage != null
-                            ? ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child:
-                                  kIsWeb
-                                      ? Image.memory(
-                                        _webImage!,
-                                        fit: BoxFit.cover,
-                                      )
-                                      : Image.file(
-                                        File(_pickedImage!.path),
-                                        fit: BoxFit.cover,
-                                      ),
-                            )
-                            : Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.add_photo_alternate,
-                                  size: 64,
-                                  color: Colors.white38,
-                                ),
-                                SizedBox(height: 8),
-                                Text(
-                                  "Tap to add vehicle image",
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ],
+                    child: _imageBytes != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.memory(
+                              _imageBytes!,
+                              fit: BoxFit.cover,
                             ),
+                          )
+                        : const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.add_photo_alternate,
+                                size: 64,
+                                color: Colors.white38,
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                "Tap to add vehicle image",
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
                   ),
                 ),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     TextButton.icon(
                       onPressed: () => _pickImage(ImageSource.camera),
-                      icon: Icon(Icons.camera_alt, color: Colors.white70),
-                      label: Text(
+                      icon: const Icon(Icons.camera_alt, color: Colors.white70),
+                      label: const Text(
                         "Camera",
                         style: TextStyle(color: Colors.white70),
                       ),
                     ),
                     TextButton.icon(
                       onPressed: () => _pickImage(ImageSource.gallery),
-                      icon: Icon(Icons.photo_library, color: Colors.white70),
-                      label: Text(
+                      icon: const Icon(Icons.photo_library, color: Colors.white70),
+                      label: const Text(
                         "Gallery",
                         style: TextStyle(color: Colors.white70),
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 Center(
                   child: ElevatedButton(
                     onPressed: _confirmSubmission,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: Colors.black,
-                      padding: EdgeInsets.symmetric(
+                      padding: const EdgeInsets.symmetric(
                         horizontal: 40,
                         vertical: 14,
                       ),
                     ),
-                    child: Text("Add Vehicle"),
+                    child: const Text("Add Vehicle"),
                   ),
                 ),
               ],
@@ -276,32 +281,31 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   void _showImageSourceDialog() {
     showDialog(
       context: context,
-      builder:
-          (ctx) => AlertDialog(
-            backgroundColor: Colors.grey[900],
-            title: Text('Select Image', style: TextStyle(color: Colors.white)),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: Icon(Icons.camera_alt, color: Colors.white70),
-                  title: Text('Camera', style: TextStyle(color: Colors.white)),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    _pickImage(ImageSource.camera);
-                  },
-                ),
-                ListTile(
-                  leading: Icon(Icons.photo_library, color: Colors.white70),
-                  title: Text('Gallery', style: TextStyle(color: Colors.white)),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    _pickImage(ImageSource.gallery);
-                  },
-                ),
-              ],
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.grey[900],
+        title: const Text('Select Image', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: Colors.white70),
+              title: const Text('Camera', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickImage(ImageSource.camera);
+              },
             ),
-          ),
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: Colors.white70),
+              title: const Text('Gallery', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -316,7 +320,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
       controller: controller,
       keyboardType: keyboardType,
       maxLines: maxLines,
-      style: TextStyle(color: Colors.white),
+      style: const TextStyle(color: Colors.white),
       decoration: _inputDecoration(label),
       validator: validator,
     );
@@ -325,14 +329,14 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   InputDecoration _inputDecoration(String label) {
     return InputDecoration(
       labelText: label,
-      labelStyle: TextStyle(color: Colors.white70),
+      labelStyle: const TextStyle(color: Colors.white70),
       filled: true,
       fillColor: Colors.grey[850],
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
         borderSide: BorderSide.none,
       ),
-      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     );
   }
 

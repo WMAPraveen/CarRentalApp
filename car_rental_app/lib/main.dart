@@ -1,13 +1,13 @@
 
 import 'package:car_rental_app/features/auth/screen/Loadingscreen.dart';
-import 'package:car_rental_app/features/auth/screen/location_screen.dart';
-import 'package:car_rental_app/features/auth/screen/signin.dart';
+// import 'package:car_rental_app/features/auth/screen/location_screen.dart';
+// import 'package:car_rental_app/features/auth/screen/signin.dart';
 
 // import 'package:car_rental_app/features/auth/screen/Loadingscreen.dart';
 // import 'package:car_rental_app/features/auth/screen/location_screen.dart';
 // import 'package:car_rental_app/features/auth/screen/signin.dart';
 
-import 'package:car_rental_app/features/auth/screen/welcomescreen.dart';
+// import 'package:car_rental_app/features/auth/screen/welcomescreen.dart';
 import 'package:car_rental_app/features/home/home.dart';
 import 'package:car_rental_app/features/lister/listerdashboardscreen.dart';
 // import 'package:car_rental_app/features/home/home.dart';
@@ -61,7 +61,7 @@ class MyApp extends StatelessWidget {
       // home: const DashboardScreen(),
       // home: const VehicleDetailsScreen(),
       // home: const SignInScreen(),
-
+      // home:HomeScreen()
       home:LoadingScreen(),
 
      

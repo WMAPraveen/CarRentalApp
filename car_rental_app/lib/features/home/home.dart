@@ -1,8 +1,9 @@
 import 'dart:async';
-import 'dart:convert'; // For base64 decoding
-import 'dart:typed_data'; // For Uint8List
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:car_rental_app/features/auth/screen/profile_screen.dart';
 import 'package:car_rental_app/features/home/bookmark_page.dart';
+import 'package:car_rental_app/models/vehicle.dart';
 import 'package:car_rental_app/widgets/customer_drawer.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -34,13 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _handleLogout() {
-    // Add logout logic here if needed
-    // Example:
-    // FirebaseAuth.instance.signOut();
-    // Navigator.of(context).pushAndRemoveUntil(
-    //   MaterialPageRoute(builder: (context) => LoginScreen()),
-    //   (route) => false,
-    // );
+    FirebaseAuth.instance.signOut();
   }
 
   @override
@@ -113,7 +108,7 @@ class _HomeContentState extends State<HomeContent> {
 
         _scrollController.animateTo(
           _scrollPosition,
-          duration: const Duration(milliseconds: 600),
+          duration: const Duration(milliseconds: 700),
           curve: Curves.easeInOut,
         );
       }
@@ -131,11 +126,10 @@ class _HomeContentState extends State<HomeContent> {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       try {
-        final userDoc =
-            await FirebaseFirestore.instance
-                .collection('users')
-                .doc(user.uid)
-                .get();
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
         if (userDoc.exists) {
           return userDoc.data() ?? {};
         }
@@ -170,7 +164,6 @@ class _HomeContentState extends State<HomeContent> {
         print('Error decoding profile image: $e');
       }
     }
-
     return const CircleAvatar(
       radius: 20,
       backgroundColor: Colors.grey,
@@ -198,10 +191,7 @@ class _HomeContentState extends State<HomeContent> {
           children: [
             Container(
               color: Colors.black,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -210,24 +200,18 @@ class _HomeContentState extends State<HomeContent> {
                       FutureBuilder<Map<String, dynamic>>(
                         future: _getCurrentUserData(),
                         builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
                             return const CircleAvatar(
                               radius: 20,
                               backgroundColor: Colors.grey,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                               ),
                             );
                           }
-
                           final userData = snapshot.data ?? {};
-                          final profileImage =
-                              userData['profilePicture'] as String?;
-
+                          final profileImage = userData['profilePicture'] as String?;
                           return _buildProfileAvatar(profileImage);
                         },
                       ),
@@ -235,8 +219,7 @@ class _HomeContentState extends State<HomeContent> {
                       FutureBuilder<Map<String, dynamic>>(
                         future: _getCurrentUserData(),
                         builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
                             return const Text(
                               'Hello...',
                               style: TextStyle(
@@ -246,10 +229,8 @@ class _HomeContentState extends State<HomeContent> {
                               ),
                             );
                           }
-
                           final userData = snapshot.data ?? {};
                           final userName = userData['name'] ?? 'User';
-
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -312,13 +293,13 @@ class _HomeContentState extends State<HomeContent> {
                   scrollDirection: Axis.horizontal,
                   children: [
                     _buildFixedSizeCard('assets/images/I1.png'),
-                    SizedBox(width: _cardSpacing),
+                    const SizedBox(width: 12),
                     _buildFixedSizeCard('assets/images/I2.png'),
-                    SizedBox(width: _cardSpacing),
+                    const SizedBox(width: 12),
                     _buildFixedSizeCard('assets/images/I3.png'),
-                    SizedBox(width: _cardSpacing),
+                    const SizedBox(width: 12),
                     _buildFixedSizeCard('assets/images/I4.png'),
-                    SizedBox(width: _cardWidth),
+                    const SizedBox(width: 300),
                   ],
                 ),
               ),
@@ -332,18 +313,10 @@ class _HomeContentState extends State<HomeContent> {
               ),
             ),
             const SizedBox(height: 8),
-            // Dynamic vehicle cards from Firestore, only for listers
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: StreamBuilder<QuerySnapshot>(
-                stream:
-                    FirebaseFirestore.instance
-                        .collection('users')
-                        .where(
-                          'role',
-                          isEqualTo: 'lister',
-                        ) // Filter for lister role
-                        .snapshots(),
+                stream: FirebaseFirestore.instance.collection('vehicles').snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(
@@ -354,11 +327,12 @@ class _HomeContentState extends State<HomeContent> {
                     );
                   }
                   if (snapshot.hasError) {
+                    print('Stream error: ${snapshot.error}');
                     return Center(
                       child: Padding(
                         padding: const EdgeInsets.all(20.0),
                         child: Text(
-                          'Error loading data: ${snapshot.error}',
+                          'Error loading vehicles: ${snapshot.error}',
                           style: const TextStyle(color: Colors.red),
                         ),
                       ),
@@ -369,37 +343,37 @@ class _HomeContentState extends State<HomeContent> {
                       child: Padding(
                         padding: EdgeInsets.all(20.0),
                         child: Text(
-                          'No listers found',
+                          'No vehicles available',
                           style: TextStyle(fontSize: 16, color: Colors.grey),
                         ),
                       ),
                     );
                   }
 
-                  final users = snapshot.data!.docs;
+                  final vehicles = snapshot.data!.docs
+                      .map((doc) => Vehicle.fromMap(doc.data() as Map<String, dynamic>, doc.id))
+                      .toList();
+
+                  // Group by userId and select earliest vehicle
+                  final Map<String, Vehicle> firstVehiclesByLister = {};
+                  for (var vehicle in vehicles) {
+                    if (vehicle.userId.isNotEmpty) {
+                      if (!firstVehiclesByLister.containsKey(vehicle.userId) ||
+                          vehicle.id.compareTo(firstVehiclesByLister[vehicle.userId]!.id) < 0) {
+                        firstVehiclesByLister[vehicle.userId] = vehicle;
+                      }
+                    }
+                  }
 
                   return Column(
-                    children:
-                        users.map((userDoc) {
-                          final data = userDoc.data() as Map<String, dynamic>;
-                          final name = data['name'] ?? 'Unknown User';
-                          final location =
-                              data['location'] ?? 'Unknown Location';
-                          final coverPicture = data['coverPicture'] as String?;
-                          final userId = userDoc.id;
-
-                          return Column(
-                            children: [
-                              _buildVehicleCard(
-                                name,
-                                location,
-                                coverPicture,
-                                userId,
-                              ),
-                              const SizedBox(height: 8),
-                            ],
-                          );
-                        }).toList(),
+                    children: firstVehiclesByLister.values.map((vehicle) {
+                      return Column(
+                        children: [
+                          _buildVehicleCard(vehicle),
+                          const SizedBox(height: 8),
+                        ],
+                      );
+                    }).toList(),
                   );
                 },
               ),
@@ -444,109 +418,146 @@ class _HomeContentState extends State<HomeContent> {
     );
   }
 
-  Widget _buildVehicleCard(
-    String title,
-    String location,
-    String? coverPicture,
-    String userId,
-  ) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder:
-                (context) => Shope(
-                  title: title,
-                  location: location,
-                  coverPicture: coverPicture,
-                ),
-          ),
-        );
-      },
-      child: Card(
-        elevation: 3,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
-              ),
-              child: Container(
-                height: 160,
-                decoration: BoxDecoration(color: Colors.grey[300]),
-                child: _buildCoverImage(coverPicture),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on,
-                        size: 16,
-                        color: Colors.grey,
-                      ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          location,
-                          style: const TextStyle(
-                            color: Colors.grey,
-                            fontSize: 14,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+  Widget _buildVehicleCard(Vehicle vehicle) {
+  if (vehicle.userId.isEmpty) {
+    return const Card(
+      child: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Center(child: Text('Invalid lister ID')),
       ),
     );
   }
 
-  Widget _buildCoverImage(String? coverPicture) {
-    if (coverPicture != null && coverPicture.isNotEmpty) {
-      try {
-        final imageBytes = base64Decode(coverPicture);
-        return Image.memory(
-          imageBytes,
-          fit: BoxFit.cover,
-          width: double.infinity,
-          height: double.infinity,
-          errorBuilder: (context, error, stackTrace) {
-            return _buildPlaceholderImage();
-          },
+  return FutureBuilder<DocumentSnapshot>(
+    future: FirebaseFirestore.instance.collection('users').doc(vehicle.userId).get(),
+    builder: (context, snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return const Card(
+          child: Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Center(child: CircularProgressIndicator()),
+          ),
         );
-      } catch (e) {
-        print('Error decoding cover image: $e');
-        return _buildPlaceholderImage();
       }
-    }
+      if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
+        print('Error fetching lister: ${snapshot.error ?? 'Lister not found'}');
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Center(child: Text('Error: ${snapshot.error ?? 'Lister not found'}')),
+          ),
+        );
+      }
 
-    return _buildPlaceholderImage();
-  }
+      final listerData = snapshot.data!.data() as Map<String, dynamic>;
+      final listerName = listerData['name'] as String? ?? 'Unknown Lister';
+      final listerLocation = listerData['location'] as String? ?? 'Unknown Location';
+      final listerCoverPicture = listerData['coverPicture'] as String?;
+
+      return GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => Shope(
+                title: listerName,
+                location: listerLocation,
+                coverPicture: listerCoverPicture,
+              ),
+            ),
+          );
+        },
+        child: Card(
+          elevation: 3,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
+                ),
+                child: Container(
+                  height: 160,
+                  decoration: BoxDecoration(color: Colors.grey[300]),
+                  child: listerCoverPicture != null && listerCoverPicture.isNotEmpty
+                      ? Image.memory(
+                          base64Decode(listerCoverPicture),
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                          errorBuilder: (context, error, stackTrace) {
+                            print('Error decoding lister cover image: $error');
+                            return _buildPlaceholderImage();
+                          },
+                        )
+                      : _buildPlaceholderImage(),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Text(
+                    //   vehicle.name,
+                    //   style: const TextStyle(
+                    //     fontSize: 18,
+                    //     fontWeight: FontWeight.bold,
+                    //   ),
+                    //   maxLines: 1,
+                    //   overflow: TextOverflow.ellipsis,
+                    // ),
+                    const SizedBox(height: 4),
+                    Text(
+                      listerName,
+                      style: const TextStyle(
+                        color: Colors.grey,
+                        fontSize: 24,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '\$${vehicle.pricePerDay.toStringAsFixed(2)}/day',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.location_on,
+                          size: 16,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            listerLocation,
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 14,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
 
   Widget _buildPlaceholderImage() {
     return Container(
@@ -559,7 +570,7 @@ class _HomeContentState extends State<HomeContent> {
           Icon(Icons.image, size: 40, color: Colors.grey),
           SizedBox(height: 8),
           Text(
-            'Cover Image',
+            'No Image',
             style: TextStyle(color: Colors.grey, fontSize: 14),
           ),
         ],

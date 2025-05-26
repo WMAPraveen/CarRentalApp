@@ -3,7 +3,7 @@ import 'package:car_rental_app/features/auth/screen/signin.dart';
 import 'package:car_rental_app/features/lister/add_vehicle_screen.dart';
 import 'package:car_rental_app/features/lister/edit_profile_screen.dart';
 import 'package:car_rental_app/features/lister/vehicle_list_screen.dart';
-import 'package:car_rental_app/models/vehicle.dart';
+import 'package:car_rental_app/models/vehicle.dart' as vehicle_model;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -14,7 +14,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  List<Vehicle> vehicles = [];
+  List<vehicle_model.Vehicle> vehicles = [];
   int totalVehicles = 0;
   int rentedVehicles = 0;
   int availableVehicles = 0;
@@ -35,7 +35,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       MaterialPageRoute(builder: (context) => AddVehicleScreen()),
     );
 
-    if (newVehicle != null && newVehicle is Vehicle) {
+    if (newVehicle != null && newVehicle is vehicle_model.Vehicle) {
       setState(() {
         vehicles.add(newVehicle);
         _updateVehicleStats();
@@ -74,23 +74,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
           backgroundColor: Colors.grey[100],
           appBar: AppBar(
             backgroundColor: Colors.black,
-            title: Row(
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _currentIndex = 2;
-                    });
-                  },
-                  child: CircleAvatar(
-                    backgroundImage: AssetImage('assets/profile.jpg'),
-                    radius: 18,
-                  ),
-                ),
-                SizedBox(width: 12),
-                Text('Welcome to Dashboard', style: TextStyle(color: Colors.white, fontSize: 17)),
-              ],
-            ),
+            // title: Row(
+            //   children: [
+            //     GestureDetector(
+            //       onTap: () {
+            //         setState(() {
+            //           _currentIndex = 2;
+            //         });
+            //       },
+            //       child: CircleAvatar(
+            //         backgroundImage: AssetImage('assets/profile.jpg'),
+            //         radius: 18,
+            //       ),
+            //     ),
+            //     SizedBox(width: 12),
+            //     Text('Welcome to Dashboard', style: TextStyle(color: Colors.white, fontSize: 17)),
+            //   ],
+            // ),
             actions: [
               IconButton(
                 icon: Icon(Icons.notifications_none, color: Colors.white),

@@ -108,7 +108,7 @@ class VehicleListScreen extends StatelessWidget {
   }
 
   Widget _buildVehicleImage(Vehicle vehicle) {
-    if (vehicle.imagePath.isEmpty) {
+    if (vehicle.imageBase64.isEmpty) {
       return Container(
         width: 70,
         height: 70,
@@ -124,7 +124,7 @@ class VehicleListScreen extends StatelessWidget {
       return ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: Image.file(
-          File(vehicle.imagePath),
+          File(vehicle.imageBase64),
           width: 70,
           height: 70,
           fit: BoxFit.cover,

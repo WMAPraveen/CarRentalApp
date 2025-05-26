@@ -325,11 +325,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (_isLoading && !_isDataLoaded) {
       return Scaffold(
         backgroundColor: Colors.grey[100],
-        appBar: AppBar(
-          backgroundColor: Colors.black,
-          title: Text('Edit Profile', style: TextStyle(color: Colors.white)),
-          iconTheme: IconThemeData(color: Colors.white),
-        ),
+        // appBar: AppBar(
+        //   backgroundColor: Colors.black,
+        //   title: Text('Edit Profile', style: TextStyle(color: Colors.white)),
+        //   iconTheme: IconThemeData(color: Colors.white),
+        // ),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

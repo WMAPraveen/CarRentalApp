@@ -1,5 +1,6 @@
-import 'dart:convert'; // For base64 decoding
-import 'dart:typed_data'; // For Uint8List
+import 'dart:convert';
+import 'dart:typed_data';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:car_rental_app/features/vehicledetails/ratingpage.dart';
 import 'package:car_rental_app/features/vehicledetails/vehicledetails.dart';
 import 'package:flutter/material.dart';
@@ -7,13 +8,13 @@ import 'package:flutter/material.dart';
 class Shope extends StatefulWidget {
   final String title;
   final String location;
-  final String? coverPicture; // Add coverPicture parameter
+  final String? coverPicture;
 
   const Shope({
     Key? key,
     required this.title,
     required this.location,
-    this.coverPicture, // Make it nullable
+    this.coverPicture,
   }) : super(key: key);
 
   @override
@@ -22,13 +23,14 @@ class Shope extends StatefulWidget {
 
 class _ShopeState extends State<Shope> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-
-  final List<String> tabs = ['All', 'Cars', 'Cabs', 'Van', 'Bikes'];
+  final List<String> tabs = ['All', 'Car', 'Van', 'SUV', 'Bike', 'Truck'];
+  String? _listerUserId;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: tabs.length, vsync: this);
+    _fetchListerUserId();
   }
 
   @override
@@ -37,54 +39,106 @@ class _ShopeState extends State<Shope> with SingleTickerProviderStateMixin {
     super.dispose();
   }
 
+  Future<void> _fetchListerUserId() async {
+    try {
+      final userSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('name', isEqualTo: widget.title)
+          .limit(1)
+          .get();
+      if (userSnapshot.docs.isNotEmpty) {
+        setState(() {
+          _listerUserId = userSnapshot.docs.first.id;
+        });
+      }
+    } catch (e) {
+      print('Error fetching lister userId: $e');
+    }
+  }
+
   Widget buildTabContent(String tabName) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Column(
-        children: [
-          const SizedBox(height: 16),
-          InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => VehicleDetails(vehicleName: '$tabName Vehicle 1'),
+    if (_listerUserId == null) {
+      return const Center(child: Text('Loading lister data...'));
+    }
+
+    Query<Map<String, dynamic>> query = FirebaseFirestore.instance
+        .collection('vehicles')
+        .where('userId', isEqualTo: _listerUserId);
+
+    if (tabName != 'All') {
+      query = query.where('type', isEqualTo: tabName);
+    }
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: query.snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Center(child: Text('No $tabName vehicles available'));
+        }
+
+        final vehicles = snapshot.data!.docs;
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: vehicles.length,
+            itemBuilder: (context, index) {
+              final vehicleData = vehicles[index].data() as Map<String, dynamic>;
+              final vehicleId = vehicles[index].id;
+              final vehicleName = vehicleData['name'] ?? 'Unknown Vehicle';
+              final vehicleDescription = vehicleData['description'] ?? 'No description';
+              final imageBase64 = vehicleData['imageBase64'] as String?;
+
+              ImageProvider? vehicleImage;
+              if (imageBase64 != null && imageBase64.isNotEmpty) {
+                try {
+                  final imageBytes = base64Decode(imageBase64);
+                  vehicleImage = MemoryImage(imageBytes);
+                } catch (e) {
+                  print('Error decoding vehicle image: $e');
+                }
+              }
+
+              return InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => VehicleDetails(
+                        vehicleName: vehicleName,
+                        // Pass vehicleId instead of userId
+                        // Assuming VehicleDetails can use vehicleId to fetch details
+                      ),
+                    ),
+                  );
+                },
+                child: Card(
+                  child: ListTile(
+                    title: Text(vehicleName),
+                    subtitle: Text(vehicleDescription),
+                    leading: vehicleImage != null
+                        ? Image(image: vehicleImage, width: 50, height: 50, fit: BoxFit.cover)
+                        : const Icon(Icons.directions_car),
+                  ),
                 ),
               );
             },
-            child: Card(
-              child: ListTile(
-                title: Text('$tabName Vehicle 1'),
-                subtitle: const Text('Brand A'),
-                leading: const Icon(Icons.directions_car),
-              ),
-            ),
           ),
-          InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => VehicleDetails(vehicleName: '$tabName Vehicle 2'),
-                ),
-              );
-            },
-            child: Card(
-              child: ListTile(
-                title: Text('$tabName Vehicle 2'),
-                subtitle: const Text('Brand B'),
-                leading: const Icon(Icons.directions_car),
-              ),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Decode coverPicture if available
     ImageProvider? coverImage;
     if (widget.coverPicture != null && widget.coverPicture!.isNotEmpty) {
       try {
@@ -199,7 +253,7 @@ class _ShopeState extends State<Shope> with SingleTickerProviderStateMixin {
                     ),
                   ),
                   SizedBox(
-                    height: 250,
+                    height: 400,
                     child: TabBarView(
                       controller: _tabController,
                       children: tabs.map((tab) => buildTabContent(tab)).toList(),
