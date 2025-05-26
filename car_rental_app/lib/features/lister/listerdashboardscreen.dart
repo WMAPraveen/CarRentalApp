@@ -2,8 +2,10 @@ import 'dart:ui';
 import 'package:car_rental_app/features/auth/screen/signin.dart';
 import 'package:car_rental_app/features/lister/add_vehicle_screen.dart';
 import 'package:car_rental_app/features/lister/edit_profile_screen.dart';
+// Make sure the file path and class name are correct. If the class is named differently, update it accordingly.
 import 'package:car_rental_app/features/lister/vehicle_list_screen.dart';
 import 'package:car_rental_app/models/vehicle.dart' as vehicle_model;
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -22,11 +24,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _isMenuOpen = false;
   int _currentIndex = 0;
 
-  final List<Widget> _tabs = [Container(), AddVehicleScreen(), EditProfileScreen()];
+  final List<Widget> _tabs = [
+    Container(), // Placeholder for dashboard content
+    AddVehicleScreen(),
+    EditProfileScreen(),
+  ];
 
   @override
   void initState() {
     super.initState();
+    _fetchVehicles(); // Fetch vehicles when the screen initializes
+  }
+
+  // Fetch vehicles from Firestore for the current user
+  Future<void> _fetchVehicles() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('You must be logged in to view vehicles')),
+        );
+        return;
+      }
+
+      final vehicleSnapshot = await FirebaseFirestore.instance
+          .collection('vehicles')
+          .where('userId', isEqualTo: user.uid)
+          .get();
+      final fetchedVehicles = vehicleSnapshot.docs
+          .map((doc) => vehicle_model.Vehicle.fromJson(doc.data(), doc.id))
+          .toList();
+
+      setState(() {
+        vehicles = fetchedVehicles;
+        _updateVehicleStats();
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching vehicles: $e')),
+      );
+    }
   }
 
   void _navigateToAddVehicleScreen() async {
@@ -36,10 +73,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
 
     if (newVehicle != null && newVehicle is vehicle_model.Vehicle) {
-      setState(() {
-        vehicles.add(newVehicle);
-        _updateVehicleStats();
-      });
+      // Refresh the vehicle list from Firestore after adding a new vehicle
+      await _fetchVehicles();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('${newVehicle.name} added successfully')),
       );
@@ -47,10 +82,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _updateVehicleStats() {
-    totalVehicles = vehicles.length;
-    rentedVehicles = vehicles.where((v) => v.isRented).length;
-    availableVehicles = vehicles.where((v) => !v.isRented).length;
-    maintenanceVehicles = vehicles.where((v) => v.isUnderMaintenance).length;
+    setState(() {
+      totalVehicles = vehicles.length;
+      rentedVehicles = vehicles.where((v) => v.isRented).length;
+      availableVehicles = vehicles.where((v) => !v.isRented && !v.isUnderMaintenance).length;
+      maintenanceVehicles = vehicles.where((v) => v.isUnderMaintenance).length;
+    });
   }
 
   void _toggleMenu() {
@@ -61,8 +98,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   List<FlSpot> getRentalData() {
     return [
-      FlSpot(1, 2), FlSpot(5, 4), FlSpot(10, 3),
-      FlSpot(15, 6), FlSpot(20, 5), FlSpot(25, 7), FlSpot(30, 4),
+      FlSpot(1, 2),
+      FlSpot(5, 4),
+      FlSpot(10, 3),
+      FlSpot(15, 6),
+      FlSpot(20, 5),
+      FlSpot(25, 7),
+      FlSpot(30, 4),
     ];
   }
 
@@ -74,23 +116,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           backgroundColor: Colors.grey[100],
           appBar: AppBar(
             backgroundColor: Colors.black,
-            // title: Row(
-            //   children: [
-            //     GestureDetector(
-            //       onTap: () {
-            //         setState(() {
-            //           _currentIndex = 2;
-            //         });
-            //       },
-            //       child: CircleAvatar(
-            //         backgroundImage: AssetImage('assets/profile.jpg'),
-            //         radius: 18,
-            //       ),
-            //     ),
-            //     SizedBox(width: 12),
-            //     Text('Welcome to Dashboard', style: TextStyle(color: Colors.white, fontSize: 17)),
-            //   ],
-            // ),
+            title: Text('Welcome to Dashboard', style: TextStyle(color: Colors.white, fontSize: 17)),
             actions: [
               IconButton(
                 icon: Icon(Icons.notifications_none, color: Colors.white),
@@ -112,7 +138,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             backgroundColor: Colors.white,
             selectedItemColor: Colors.red,
             unselectedItemColor: Colors.grey,
-            onTap: (index) => setState(() => _currentIndex = index),
+            onTap: (index) {
+              if (index == 1) {
+                _navigateToAddVehicleScreen(); // Handle "Add Vehicle" separately
+              } else {
+                setState(() => _currentIndex = index);
+              }
+            },
             items: [
               BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Dashboard'),
               BottomNavigationBarItem(icon: Icon(Icons.add_circle), label: 'Add Vehicle'),
@@ -204,14 +236,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           SnackBar(content: Text('Edit feature not yet implemented')),
                         );
                       },
-                      onDelete: (vehicle) {
-                        setState(() {
-                          vehicles.remove(vehicle);
-                          _updateVehicleStats();
-                        });
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('${vehicle.name} deleted')),
-                        );
+                      onDelete: (vehicle) async {
+                        try {
+                          await FirebaseFirestore.instance
+                              .collection('vehicles')
+                              .doc(vehicle.id)
+                              .delete();
+                          await _fetchVehicles(); // Refresh the vehicle list
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('${vehicle.name} deleted')),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Error deleting vehicle: $e')),
+                          );
+                        }
                       },
                     ),
                   ),
@@ -241,9 +280,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(title, style: TextStyle(fontSize: 16, color: Colors.white70, fontWeight: FontWeight.bold)),
+              Text(title,
+                  style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white70,
+                      fontWeight: FontWeight.bold)),
               SizedBox(height: 12),
-              Text(value.toString(), style: TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.bold)),
+              Text(value.toString(),
+                  style: TextStyle(
+                      fontSize: 28,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold)),
             ],
           ),
         ),
@@ -254,13 +301,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildMenuItem(String title, IconData icon) {
     return ListTile(
       leading: Icon(icon, color: Colors.black87),
-      title: Text(title, style: TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w500)),
+      title: Text(title,
+          style: TextStyle(
+              color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w500)),
       onTap: () {
         setState(() => _isMenuOpen = false);
         if (title == 'Profile') {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => EditProfileScreen()));
+          Navigator.push(
+              context, MaterialPageRoute(builder: (context) => EditProfileScreen()));
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$title selected')));
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text('$title selected')));
         }
       },
     );
@@ -276,7 +327,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Monthly Rental Analysis', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 16)),
+            Text('Monthly Rental Analysis',
+                style: TextStyle(
+                    color: Colors.white70,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16)),
             SizedBox(height: 20),
             SizedBox(height: 270, child: _buildLineChart()),
           ],
@@ -306,7 +361,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               getTitlesWidget: (value, meta) {
                 final days = ['1', '5', '10', '15', '20', '25', '30'];
                 if (days.contains(value.toInt().toString())) {
-                  return Text(value.toInt().toString(), style: TextStyle(color: Colors.white70, fontSize: 10));
+                  return Text(value.toInt().toString(),
+                      style: TextStyle(color: Colors.white70, fontSize: 10));
                 } else {
                   return const SizedBox.shrink();
                 }
@@ -318,7 +374,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               showTitles: true,
               interval: 1,
               getTitlesWidget: (value, meta) {
-                return Text(value.toInt().toString(), style: TextStyle(color: Colors.white70, fontSize: 10));
+                return Text(value.toInt().toString(),
+                    style: TextStyle(color: Colors.white70, fontSize: 10));
               },
             ),
           ),
@@ -327,8 +384,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         gridData: FlGridData(
           show: true,
-          getDrawingHorizontalLine: (value) => FlLine(color: Colors.black, strokeWidth: 1),
-          getDrawingVerticalLine: (value) => FlLine(color: Colors.black, strokeWidth: 0),
+          getDrawingHorizontalLine: (value) =>
+              FlLine(color: Colors.black, strokeWidth: 1),
+          getDrawingVerticalLine: (value) =>
+              FlLine(color: Colors.black, strokeWidth: 0),
         ),
       ),
     );

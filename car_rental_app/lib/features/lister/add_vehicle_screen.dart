@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:car_rental_app/features/lister/vehicle_list_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:car_rental_app/models/vehicle.dart';
+// import 'package:car_rental_app/screens/vehicle_list_screen.dart'; // Import VehicleListScreen
 
 class AddVehicleScreen extends StatefulWidget {
   const AddVehicleScreen({super.key});
@@ -112,7 +114,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
       }
 
       final base64Image = base64Encode(_imageBytes!);
-      final vehicleId = FirebaseFirestore.instance.collection('vehicles').doc().id; // Generate ID
+      final vehicleId = FirebaseFirestore.instance.collection('vehicles').doc().id;
 
       final newVehicle = Vehicle(
         id: vehicleId,
@@ -131,7 +133,24 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
           .doc(vehicleId)
           .set(newVehicle.toJson());
 
-      Navigator.pop(context, newVehicle);
+      // Fetch updated vehicle list for the user
+      final vehicleSnapshot = await FirebaseFirestore.instance
+          .collection('vehicles')
+          .where('userId', isEqualTo: user.uid)
+          .get();
+      final vehicles = vehicleSnapshot.docs
+          .map((doc) => Vehicle.fromJson(doc.data(), doc.id))
+          .toList();
+
+      // Navigate to VehicleListScreen with the updated vehicle list
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => VehicleListScreen(
+            vehicles: vehicles,
+          ),
+        ),
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error adding vehicle: $e')),

@@ -1,3 +1,4 @@
+
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -113,20 +114,46 @@ class _ShopeState extends State<Shope> with SingleTickerProviderStateMixin {
                     context,
                     MaterialPageRoute(
                       builder: (_) => VehicleDetails(
+                        // vehicleId: vehicleId, // Pass vehicleId for accurate details
                         vehicleName: vehicleName,
-                        // Pass vehicleId instead of userId
-                        // Assuming VehicleDetails can use vehicleId to fetch details
                       ),
                     ),
                   );
                 },
                 child: Card(
-                  child: ListTile(
-                    title: Text(vehicleName),
-                    subtitle: Text(vehicleDescription),
-                    leading: vehicleImage != null
-                        ? Image(image: vehicleImage, width: 50, height: 50, fit: BoxFit.cover)
-                        : const Icon(Icons.directions_car),
+                  elevation: 3,
+                  margin: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: SizedBox(
+                    height: 150, // Set card height to accommodate larger image
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.all(16),
+                      title: Text(
+                        vehicleName,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: Text(
+                        vehicleDescription,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      leading: vehicleImage != null
+                          ? Image(
+                              image: vehicleImage,
+                              width: 120, // Increased from 100
+                              height: 120, // Increased from 100
+                              fit: BoxFit.cover,
+                            )
+                          : const Icon(
+                              Icons.directions_car,
+                              size: 120, // Match icon size to image
+                            ),
+                    ),
                   ),
                 ),
               );

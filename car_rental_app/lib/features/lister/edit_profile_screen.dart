@@ -647,4 +647,4 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _bioController.dispose();
     super.dispose();
   }
-}
+} 
